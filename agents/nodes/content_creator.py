@@ -148,12 +148,12 @@ def title_creator_node(state: ArticleState) -> Dict[str, Any]:
         - Tono conversacional y directo
         
         EJEMPLOS DE ESTILO:
-        - "Cómo [hacer algo] en 5 pasos simples"
-        - "[Número] formas de [beneficio] para tu pyme"
-        - "Qué es [concepto] y cómo puede [beneficio]"
-        - "Guía completa de [tema] para pymes argentinas"
+        - Cómo [hacer algo] en 5 pasos simples
+        - [Número] formas de [beneficio] para tu pyme
+        - Qué es [concepto] y cómo puede [beneficio]
+        - Guía completa de [tema] para pymes argentinas
         
-        Responde SOLO con el título, sin comillas ni explicaciones.
+        IMPORTANTE: Responde SOLO con el título limpio, SIN comillas, SIN explicaciones.
         """
         
         response = client.chat.completions.create(
@@ -164,6 +164,9 @@ def title_creator_node(state: ArticleState) -> Dict[str, Any]:
         )
         
         title = response.choices[0].message.content.strip()
+        
+        # Limpiar comillas que puedan haber quedado
+        title = title.strip('"').strip("'").strip()
         
         # Actualizar estado
         processing_log = state.get('processing_log', [])
