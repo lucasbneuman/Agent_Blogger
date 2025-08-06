@@ -1,18 +1,32 @@
 # 🤖 Agent Blogger
 
-Generador automático de artículos SEO para lucasbenites.com usando IA y LangGraph.
+Sistema de automatización 100% completo para generación de artículos SEO profesionales con IA y LangGraph.
 
-## 🎯 Características
+## ✨ Características Principales
 
-- **Generación automática** de artículos extensos y optimizados para SEO
-- **Flujo de trabajo inteligente** con LangGraph y múltiples nodos especializados
-- **Equilibrio automático** entre etapas del buyer journey (conciencia, consideración, compra)
-- **Integración completa** con WordPress API
-- **Generación de imágenes** con DALL-E 3
-- **Enlaces internos automáticos** entre artículos
-- **CTAs personalizados** según la etapa del artículo
+### 🚀 **Automatización 100% Completa**
+- **Generación automática** de artículos 1200+ palabras optimizados para SEO
+- **Conversión Markdown → HTML** automática (H1, H2, H3, H4, negritas, cursivas)
+- **Imágenes DALL-E automáticas**: Descarga y subida como imagen destacada
+- **Yoast SEO completo**: Keyword, meta descripción, Open Graph, Twitter Cards
+- **Etiquetas inteligentes**: Creación automática de etiquetas no existentes
+- **Enlaces internos naturales**: Integración contextual en el contenido
+- **CTA funcional**: Call-to-Action con enlaces personalizados
+
+### 🎯 **Flujo de Trabajo Inteligente**
+- **LangGraph workflow** con nodos especializados
+- **Equilibrio automático** entre etapas del buyer journey
 - **Sistema de revisión** y control de calidad
-- **API REST** para gestión y monitoreo
+- **Gestión de errores** con fallbacks automáticos
+- **Debug completo** con logs detallados
+
+### 📊 **Resultados Garantizados**
+- ⏱️ **Tiempo**: 2-3 minutos por artículo completo
+- 📝 **Contenido**: 1200+ palabras profesionales
+- 🔗 **Enlaces**: 3-4 enlaces internos integrados
+- 🏷️ **Etiquetas**: 4-5 etiquetas relevantes
+- 🖼️ **Imagen**: DALL-E generada y asignada automáticamente
+- 📱 **SEO**: Yoast completamente configurado
 
 ## 🏗️ Arquitectura
 
@@ -74,14 +88,45 @@ DATABASE_URL=sqlite:///./agent_blogger.db
 python main.py init
 ```
 
-## 📖 Uso
+### 6. Configurar WordPress (Requerido para 100% automatización)
 
-### Servidor API (Recomendado)
-```bash
-python main.py server
+Agregar al `functions.php` de tu tema WordPress:
+```php
+// Ver archivo: wordpress_functions_code.php
+// Habilita meta fields Yoast SEO via REST API
 ```
-- API disponible en `http://localhost:8000`
-- Documentación automática en `http://localhost:8000/docs`
+
+## 🚀 Uso
+
+### Generación Automática Completa (Recomendado)
+```bash
+python main.py publish
+```
+
+**¡Un solo comando genera y publica artículos completos!**
+- ✅ Contenido profesional 1200+ palabras
+- ✅ HTML limpio y estructurado  
+- ✅ Imagen DALL-E descargada y asignada
+- ✅ Yoast SEO completamente configurado
+- ✅ Enlaces internos integrados
+- ✅ CTA funcional para conversión
+- ✅ Etiquetas creadas automáticamente
+- ✅ Borrador listo para revisión
+
+### Otros Comandos
+```bash
+# Servidor API para múltiples artículos
+python main.py server
+
+# Generar artículo sin publicar
+python main.py generate
+
+# Ejecutar tests
+python main.py test
+
+# Ver ayuda
+python main.py help
+```
 
 ### Generar artículo individual
 ```bash
