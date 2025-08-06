@@ -191,25 +191,29 @@ def wordpress_publisher_node(state: ArticleState) -> Dict[str, Any]:
                 print(f"  Tag NOT found: {tag_name} - creando en WordPress...")
                 # Crear etiqueta en WordPress
                 try:
+                    # Limpiar y generar slug para WordPress
+                    clean_tag_name = re.sub(r'[^\w\s-]', '', tag_name).strip()
+                    tag_slug = re.sub(r'[-\s]+', '-', clean_tag_name.lower())
+                    
+                    tag_data = {
+                        'name': clean_tag_name,
+                        'slug': tag_slug
+                    }
+                    
                     tag_response = requests.post(
                         f"{wp_url}/wp-json/wp/v2/tags",
-                        json={'name': tag_name},
+                        json=tag_data,
                         auth=(wp_user, wp_password)
                     )
                     if tag_response.status_code == 201:
                         wp_tag_data = tag_response.json()
                         new_wp_tag_id = wp_tag_data['id']
                         tag_ids.append(new_wp_tag_id)
-                        print(f"    Created new tag: {tag_name} -> ID {new_wp_tag_id}")
+                        print(f"    Created new tag: {clean_tag_name} -> ID {new_wp_tag_id}")
                         
                         # Guardar en BD local para futuras referencias
                         try:
-                            # Generar slug desde el nombre
-                            import re
-                            slug = re.sub(r'[^\w\s-]', '', tag_name.lower()).strip()
-                            slug = re.sub(r'[-\s]+', '-', slug)
-                            
-                            new_tag = Tag(name=tag_name, slug=slug, wordpress_id=new_wp_tag_id)
+                            new_tag = Tag(name=clean_tag_name, slug=tag_slug, wordpress_id=new_wp_tag_id)
                             db.add(new_tag)
                             db.commit()
                         except Exception as e:

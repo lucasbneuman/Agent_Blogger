@@ -39,7 +39,7 @@ def content_creator_node(state: ArticleState) -> Dict[str, Any]:
             """,
             'compra': """
             El artículo debe convencer y guiar hacia la toma de decisión.
-            Incluye evidencia social, casos de éxito y llamadas a la acción claras.
+            Incluye evidencia social, casos de uso reales y beneficios tangibles.
             El lector está listo para tomar una decisión.
             """
         }
@@ -56,16 +56,21 @@ def content_creator_node(state: ArticleState) -> Dict[str, Any]:
         - Dirigido a dueños y gerentes de pymes (poco técnicos)
         - Marca personal: Lucas Benites 
         - Público principalmente argentino
-        - Incluir ejemplos prácticos y casos reales
-        - Estructura clara con subtítulos H2 y H3
+        - Incluir ejemplos prácticos y casos de uso reales
+        - Estructura clara con subtítulos usando ## y ###
         - Optimizado para SEO con la keyword principal
         
         ESTRUCTURA REQUERIDA:
         1. Introducción enganchadora (problema/beneficio)
-        2. 3-4 secciones principales con subtítulos H2
-        3. Cada sección con 2-3 subsecciones H3 si es necesario
-        4. Ejemplos prácticos en cada sección
+        2. 3-4 secciones principales con subtítulos ##
+        3. Cada sección con 2-3 subsecciones ### si es necesario
+        4. Casos de uso específicos y ejemplos prácticos en cada sección
         5. Conclusión que resuma los puntos clave
+        
+        IMPORTANTE: 
+        - Usa formato markdown (## para títulos, ### para subtítulos)
+        - NO escribas "H2:" o "H3:" - usa directamente ## y ###
+        - Enfócate en casos de uso REALES, no inventes casos de éxito específicos
         
         TONO:
         - Conversacional ("vos" en lugar de "tú")
