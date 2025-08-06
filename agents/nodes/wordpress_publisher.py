@@ -166,20 +166,13 @@ def wordpress_publisher_node(state: ArticleState) -> Dict[str, Any]:
             raise Exception("Faltan credenciales de WordPress en variables de entorno")
         
         # Preparar contenido completo del artículo (convertir markdown a HTML)
+        # NOTA: El CTA ya está integrado en state['content'] por article_assembler_node
         full_content = markdown_to_html(state['content'])
         
-        # Agregar CTA al final si existe
-        if state.get('cta_title') and state.get('cta_content'):
-            cta_html = f"""
-            <h3>{state['cta_title']}</h3>
-            <p>{state['cta_content']}</p>
-            """
-            
-            # Agregar enlace del CTA si existe
-            if state.get('cta_link'):
-                cta_html += f'<p><a href="{state["cta_link"]}" target="_blank" rel="noopener">👉 Hacer clic aquí</a></p>'
-            
-            full_content += "\n\n" + cta_html
+        # Agregar enlace del CTA al final si existe (solo el enlace, no duplicar el contenido)
+        if state.get('cta_link') and state.get('cta_content'):
+            cta_link_html = f'<p><a href="{state["cta_link"]}" target="_blank" rel="noopener">👉 Hacer clic aquí</a></p>'
+            full_content += "\n\n" + cta_link_html
         
         # Obtener ID de categoría de WordPress
         db = next(get_db())
