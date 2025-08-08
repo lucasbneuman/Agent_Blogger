@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 """
-API REST para Render - Maneja generación programada y bot Telegram
+API REST para Render - Con webhooks de Telegram (NO polling)
 """
 
 import os
 import sys
-import asyncio
-import threading
 import logging
+import tempfile
 from datetime import datetime
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
-import json
+import openai
 
 load_dotenv()
 
@@ -25,62 +24,177 @@ logger = logging.getLogger(__name__)
 # Crear app Flask
 app = Flask(__name__)
 
-# Variable global para el bot
-telegram_bot_thread = None
-telegram_app = None
-
-def init_telegram_bot():
-    """Inicializar bot de Telegram en hilo separado"""
-    global telegram_app
-    
-    try:
-        from integrations.telegram_final import FinalTelegramBot
-        from telegram.ext import Application, CommandHandler, MessageHandler, filters
-        
-        bot = FinalTelegramBot()
-        telegram_app = Application.builder().token(bot.token).build()
-        
-        # Handlers
-        telegram_app.add_handler(CommandHandler("start", bot.start))
-        telegram_app.add_handler(MessageHandler(filters.VOICE, bot.handle_voice_message))
-        telegram_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, bot.handle_text_message))
-        
-        logger.info("Bot de Telegram configurado correctamente")
-        return True
-        
-    except Exception as e:
-        logger.error(f"Error inicializando bot Telegram: {e}")
-        return False
-
-def run_telegram_bot():
-    """Ejecutar bot de Telegram"""
-    global telegram_app
-    
-    if not telegram_app:
-        logger.error("Bot de Telegram no inicializado")
-        return
-    
-    try:
-        # Crear nuevo event loop para este hilo
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        
-        logger.info("Iniciando bot de Telegram...")
-        telegram_app.run_polling(drop_pending_updates=True)
-        
-    except Exception as e:
-        logger.error(f"Error ejecutando bot Telegram: {e}")
+# Cliente OpenAI global
+openai_client = openai.OpenAI()
 
 @app.route('/', methods=['GET'])
 def health_check():
     """Health check para Render"""
     return jsonify({
         'status': 'active',
-        'service': 'Agent Blogger API',
-        'version': '2.0',
-        'timestamp': datetime.utcnow().isoformat(),
-        'telegram_bot': 'active' if telegram_app else 'inactive'
+        'service': 'Agent Blogger API v2.0',
+        'telegram_mode': 'webhooks',
+        'timestamp': datetime.now().isoformat(),
     })
+
+@app.route('/telegram-webhook', methods=['POST'])
+def telegram_webhook():
+    """Webhook para recibir mensajes de Telegram"""
+    try:
+        update = request.get_json()
+        
+        if not update or 'message' not in update:
+            return jsonify({'status': 'ignored'}), 200
+        
+        message = update['message']
+        chat_id = message['chat']['id']
+        
+        # Manejar comando /start
+        if 'text' in message and message['text'] == '/start':
+            send_telegram_message(chat_id, 
+                "Agent Blogger Bot v2.0\n\n"
+                "¡Ahora puedo crear articulos basados en tus ideas!\n\n"
+                "Como funciona:\n"
+                "• Envia un audio con tu idea\n"
+                "• O escribe tu idea por texto\n"
+                "• Yo genero un articulo completo\n\n"
+                "Bot activo y listo!"
+            )
+            return jsonify({'status': 'start_sent'}), 200
+        
+        # Manejar mensajes de voz
+        if 'voice' in message:
+            return handle_voice_message(chat_id, message['voice'])
+        
+        # Manejar texto (ideas)
+        if 'text' in message and not message['text'].startswith('/'):
+            return handle_text_idea(chat_id, message['text'])
+        
+        return jsonify({'status': 'ignored'}), 200
+        
+    except Exception as e:
+        logger.error(f"Error en webhook Telegram: {e}")
+        return jsonify({'error': str(e)}), 500
+
+def handle_voice_message(chat_id, voice):
+    """Procesar mensaje de voz"""
+    try:
+        send_telegram_message(chat_id, "Procesando tu audio...")
+        
+        # Obtener archivo de audio
+        file_url = get_telegram_file_url(voice['file_id'])
+        
+        # Descargar y transcribir
+        audio_content = download_telegram_file(file_url)
+        
+        # Crear archivo temporal
+        with tempfile.NamedTemporaryFile(suffix='.ogg', delete=False) as temp_file:
+            temp_file.write(audio_content)
+            temp_file.flush()
+            
+            # Transcribir con Whisper
+            with open(temp_file.name, 'rb') as audio_file:
+                transcript = openai_client.audio.transcriptions.create(
+                    model="whisper-1",
+                    file=audio_file,
+                    language="es"
+                )
+            
+            os.unlink(temp_file.name)
+        
+        idea_text = transcript.text
+        
+        send_telegram_message(chat_id,
+            f"Transcripcion:\n\n\"{idea_text}\"\n\n"
+            f"Generando articulo completo..."
+        )
+        
+        # Generar artículo
+        return generate_article_from_idea(chat_id, idea_text)
+        
+    except Exception as e:
+        logger.error(f"Error procesando audio: {e}")
+        send_telegram_message(chat_id, f"Error procesando audio: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+def handle_text_idea(chat_id, text):
+    """Procesar idea de texto"""
+    try:
+        send_telegram_message(chat_id,
+            f"Idea recibida:\n\n\"{text}\"\n\n"
+            f"Generando articulo completo..."
+        )
+        
+        return generate_article_from_idea(chat_id, text)
+        
+    except Exception as e:
+        logger.error(f"Error procesando texto: {e}")
+        send_telegram_message(chat_id, f"Error procesando idea: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+def generate_article_from_idea(chat_id, idea):
+    """Generar artículo usando la idea"""
+    try:
+        from agents.workflow import run_article_generation_sync_with_idea
+        
+        result = run_article_generation_sync_with_idea(idea)
+        
+        if result and result.get('is_complete'):
+            send_telegram_message(chat_id,
+                f"Articulo creado y publicado!\n\n"
+                f"Titulo: {result.get('title', 'N/A')}\n"
+                f"WordPress ID: {result.get('wordpress_id', 'N/A')}\n"
+                f"Estado: Publicado\n\n"
+                f"Disponible en tu sitio web!"
+            )
+            return jsonify({'success': True, 'article_id': result.get('wordpress_id')}), 200
+        else:
+            send_telegram_message(chat_id, "Error generando articulo")
+            return jsonify({'success': False}), 500
+            
+    except Exception as e:
+        logger.error(f"Error generando articulo: {e}")
+        send_telegram_message(chat_id, f"Error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+def get_telegram_file_url(file_id):
+    """Obtener URL de archivo de Telegram"""
+    import requests
+    
+    token = os.getenv('TELEGRAM_BOT_TOKEN')
+    response = requests.get(f'https://api.telegram.org/bot{token}/getFile?file_id={file_id}')
+    
+    if response.status_code == 200:
+        file_path = response.json()['result']['file_path']
+        return f'https://api.telegram.org/file/bot{token}/{file_path}'
+    else:
+        raise Exception(f"Error obteniendo archivo: {response.text}")
+
+def download_telegram_file(file_url):
+    """Descargar archivo de Telegram"""
+    import requests
+    
+    response = requests.get(file_url)
+    if response.status_code == 200:
+        return response.content
+    else:
+        raise Exception(f"Error descargando archivo: {response.status_code}")
+
+def send_telegram_message(chat_id, text):
+    """Enviar mensaje a Telegram"""
+    import requests
+    
+    token = os.getenv('TELEGRAM_BOT_TOKEN')
+    url = f'https://api.telegram.org/bot{token}/sendMessage'
+    
+    data = {
+        'chat_id': chat_id,
+        'text': text
+    }
+    
+    response = requests.post(url, json=data)
+    if response.status_code != 200:
+        logger.warning(f"Error enviando mensaje Telegram: {response.text}")
 
 @app.route('/generate-article', methods=['POST'])
 def generate_article_endpoint():
@@ -88,7 +202,7 @@ def generate_article_endpoint():
     try:
         logger.info("Solicitud de generación de artículo recibida")
         
-        # Verificar token de seguridad (opcional)
+        # Verificar token de seguridad
         auth_token = request.headers.get('Authorization')
         expected_token = os.getenv('API_SECRET_TOKEN', 'default-secret')
         
@@ -98,9 +212,9 @@ def generate_article_endpoint():
         # Generar artículo
         from agents.workflow import run_article_generation_sync
         
-        start_time = datetime.utcnow()
+        start_time = datetime.now()
         result = run_article_generation_sync()
-        end_time = datetime.utcnow()
+        end_time = datetime.now()
         
         generation_time = (end_time - start_time).total_seconds()
         
@@ -129,56 +243,7 @@ def generate_article_endpoint():
         return jsonify({
             'success': False,
             'error': str(e),
-            'timestamp': datetime.utcnow().isoformat()
-        }), 500
-
-@app.route('/generate-with-idea', methods=['POST'])
-def generate_with_idea_endpoint():
-    """Endpoint para generar artículo con idea específica"""
-    try:
-        data = request.get_json()
-        
-        if not data or 'idea' not in data:
-            return jsonify({'error': 'Campo "idea" requerido'}), 400
-        
-        idea = data['idea']
-        logger.info(f"Generando artículo con idea: {idea[:100]}...")
-        
-        # Generar artículo con idea
-        from agents.workflow import run_article_generation_sync_with_idea
-        
-        start_time = datetime.utcnow()
-        result = run_article_generation_sync_with_idea(idea)
-        end_time = datetime.utcnow()
-        
-        generation_time = (end_time - start_time).total_seconds()
-        
-        if result and result.get('is_complete'):
-            response = {
-                'success': True,
-                'article_id': result.get('wordpress_id'),
-                'title': result.get('title'),
-                'keyword': result.get('selected_keyword'),
-                'idea': idea,
-                'generation_time': generation_time,
-                'timestamp': end_time.isoformat()
-            }
-            
-            logger.info(f"Artículo con idea generado: {result.get('title')}")
-            return jsonify(response)
-        else:
-            return jsonify({
-                'success': False,
-                'error': 'Error en la generación del artículo',
-                'timestamp': end_time.isoformat()
-            }), 500
-            
-    except Exception as e:
-        logger.error(f"Error en endpoint generate-with-idea: {e}")
-        return jsonify({
-            'success': False,
-            'error': str(e),
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now().isoformat()
         }), 500
 
 @app.route('/status', methods=['GET'])
@@ -197,33 +262,46 @@ def status():
         
         return jsonify({
             'status': 'operational',
-            'telegram_bot': 'active' if telegram_app else 'inactive',
+            'telegram_mode': 'webhooks',
             'database': 'connected',
             'total_articles': total_articles,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now().isoformat()
         })
         
     except Exception as e:
         return jsonify({
             'status': 'error',
             'error': str(e),
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now().isoformat()
         }), 500
 
-def start_telegram_in_background():
-    """Iniciar bot de Telegram en hilo separado"""
-    global telegram_bot_thread
-    
-    if init_telegram_bot():
-        telegram_bot_thread = threading.Thread(target=run_telegram_bot, daemon=True)
-        telegram_bot_thread.start()
-        logger.info("Bot de Telegram iniciado en hilo separado")
-    else:
-        logger.warning("No se pudo inicializar el bot de Telegram")
+@app.route('/setup-webhook', methods=['POST'])
+def setup_webhook():
+    """Configurar webhook de Telegram"""
+    try:
+        token = os.getenv('TELEGRAM_BOT_TOKEN')
+        webhook_url = request.json.get('webhook_url')
+        
+        if not webhook_url:
+            return jsonify({'error': 'webhook_url requerido'}), 400
+        
+        import requests
+        response = requests.post(
+            f'https://api.telegram.org/bot{token}/setWebhook',
+            json={'url': f'{webhook_url}/telegram-webhook'}
+        )
+        
+        if response.status_code == 200:
+            return jsonify({'success': True, 'result': response.json()})
+        else:
+            return jsonify({'error': response.text}), 500
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__":
     # Inicializar sistema
-    logger.info("Iniciando Agent Blogger API para Render...")
+    logger.info("Iniciando Agent Blogger API v2.0 para Render (Webhooks)...")
     
     # Verificar variables de entorno
     required_vars = ['OPENAI_API_KEY', 'WP_URL', 'WP_USERNAME', 'WP_PASSWORD']
@@ -244,20 +322,16 @@ if __name__ == "__main__":
         logger.error(f"Error inicializando base de datos: {e}")
         sys.exit(1)
     
-    # Iniciar bot de Telegram en background si está configurado
-    if os.getenv('TELEGRAM_BOT_TOKEN'):
-        start_telegram_in_background()
-    else:
-        logger.warning("TELEGRAM_BOT_TOKEN no configurado - Bot de Telegram deshabilitado")
-    
     # Iniciar servidor Flask
     port = int(os.getenv('PORT', 5000))
     
     logger.info(f"Servidor iniciado en puerto {port}")
+    logger.info("Telegram funcionando con WEBHOOKS (no polling)")
     logger.info("Endpoints disponibles:")
     logger.info("  GET  / - Health check")
+    logger.info("  POST /telegram-webhook - Webhook de Telegram")
     logger.info("  POST /generate-article - Generar artículo automático")
-    logger.info("  POST /generate-with-idea - Generar con idea específica")
     logger.info("  GET  /status - Estado del sistema")
+    logger.info("  POST /setup-webhook - Configurar webhook Telegram")
     
     app.run(host='0.0.0.0', port=port, debug=False)
