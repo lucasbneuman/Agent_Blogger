@@ -26,30 +26,51 @@ def image_creator_node(state: ArticleState) -> Dict[str, Any]:
         return new_state
     
     try:
-        # Crear prompt para la imagen basado en el contenido
+        # Crear prompt mejorado y contextual para la imagen
+        content_preview = state.get('content', '')[:500]  # Obtener preview del contenido
+        
         image_prompt_generator = f"""
-        Crea un prompt en inglés para DALL-E que genere una imagen destacada profesional para este artículo:
+        Analiza este artículo y crea un prompt ESPECÍFICO y CONTEXTUAL en inglés para DALL-E:
         
         TÍTULO: {title}
         KEYWORD: {keyword}
         ETAPA: {stage}
+        CONTENIDO (preview): {content_preview}...
         
-        REQUISITOS DE LA IMAGEN:
-        - Personas reales trabajando en oficina/empresa
-        - Ambiente profesional pero cálido
-        - Tecnología/computadoras visible pero no dominante
-        - Estilo fotográfico realista
-        - Colores profesionales (azules, grises, blancos)
-        - Aspectos de colaboración y éxito empresarial
+        INSTRUCCIONES PARA CREAR EL PROMPT:
         
-        ESTILO:
-        - "Professional business photography"
-        - "High quality"
-        - "Modern office environment"
-        - "Real people"
-        - "Natural lighting"
+        1. IDENTIFICA EL CONTEXTO ESPECÍFICO:
+        - Si menciona consultorio médico → imagen en consultorio/clínica
+        - Si habla de restaurante → imagen en restaurante/cocina
+        - Si es sobre fábrica → imagen en planta industrial
+        - Si es oficina → imagen en oficina moderna
+        - Si es e-commerce → imagen en almacén/tienda online
+        - Si es sobre educación → imagen en aula/centro educativo
         
-        Crea un prompt detallado en inglés para DALL-E. Responde SOLO con el prompt.
+        2. INCLUYE PROTAGONISTAS ESPECÍFICOS:
+        - Profesionales del sector mencionado (médicos, chefs, ingenieros, etc.)
+        - Personas reales y diversas
+        - Vestimenta apropiada al contexto
+        - Expresiones de confianza y profesionalismo
+        
+        3. AMBIENTE REALISTA Y ESPECÍFICO:
+        - Ubicación específica según el tema
+        - Herramientas/equipos del sector
+        - Detalles que den credibilidad
+        - Iluminación natural y profesional
+        
+        4. ESTILO FOTOGRÁFICO:
+        - "Professional corporate photography"
+        - "High-resolution realistic photo"
+        - "Natural lighting, sharp focus"
+        - "Modern [specific industry] setting"
+        
+        EJEMPLOS DE CONTEXTOS:
+        - Artículo sobre IA en medicina → "Professional medical team using AI technology in modern hospital, doctors and nurses collaborating with computers, clinical setting"
+        - Artículo sobre automatización en restaurantes → "Professional chefs and restaurant staff using digital ordering systems, modern commercial kitchen"
+        - Artículo sobre pymes → "Small business owners working together in modern office, diverse team collaborating"
+        
+        Crea un prompt MUY ESPECÍFICO en inglés que capture el contexto exacto del artículo. Responde SOLO con el prompt.
         """
         
         prompt_response = client.chat.completions.create(

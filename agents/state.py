@@ -40,6 +40,10 @@ class ArticleState(TypedDict):
     retry_count: int
     skip_wordpress_publishing: bool
     
+    # Ideas de Telegram (nueva funcionalidad)
+    telegram_idea: Optional[str]  # Idea enviada desde Telegram
+    telegram_idea_mode: bool  # True si el artículo proviene de idea de Telegram
+    
     # WordPress
     wordpress_id: Optional[int]
     is_published: bool

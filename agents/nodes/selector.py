@@ -4,12 +4,133 @@ from database import get_db, Keyword
 from agents.state import ArticleState
 import random
 from datetime import datetime
+import openai
+import os
+
+def generate_seo_keyword_from_idea(telegram_idea: str) -> str:
+    """
+    Genera una keyword SEO optimizada basada en la idea de Telegram
+    """
+    
+    client = openai.OpenAI()
+    
+    prompt = f"""
+Analiza esta idea de artículo y genera UNA keyword SEO específica y optimizada:
+
+IDEA DEL USUARIO: {telegram_idea}
+
+INSTRUCCIONES:
+1. Identifica el tema principal y el público objetivo
+2. Crea una keyword de 3-6 palabras que sea:
+   - Específica y relevante al tema
+   - Optimizada para SEO (incluir términos de búsqueda)
+   - Orientada a Argentina cuando sea relevante
+   - Enfocada en la intención de búsqueda del usuario
+
+3. La keyword debe ser algo que la gente buscaría en Google
+
+EJEMPLOS:
+- Idea: "IA para restaurantes" → Keyword: "inteligencia artificial restaurantes Argentina"
+- Idea: "automatizar contabilidad pymes" → Keyword: "software contabilidad automatizada pymes"
+- Idea: "marketing digital consultoría" → Keyword: "servicios marketing digital empresas"
+
+RESPONDE SOLO CON LA KEYWORD (sin comillas ni explicaciones):
+"""
+    
+    try:
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "Eres un experto en SEO que genera keywords específicas y optimizadas."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=50,
+            temperature=0.3
+        )
+        
+        keyword = response.choices[0].message.content.strip()
+        
+        # Limpiar la respuesta por si incluye comillas o texto extra
+        keyword = keyword.replace('"', '').replace("'", "").strip()
+        
+        # Si la keyword es muy larga, truncarla
+        if len(keyword) > 80:
+            keyword = keyword[:80]
+        
+        return keyword
+        
+    except Exception as e:
+        # Fallback: extraer términos clave de la idea original
+        import re
+        
+        # Remover palabras comunes
+        stop_words = ['el', 'la', 'de', 'que', 'y', 'a', 'un', 'una', 'para', 'con', 'por', 'como', 'sobre', 'en']
+        
+        # Extraer palabras importantes
+        words = re.findall(r'\b\w+\b', telegram_idea.lower())
+        important_words = [w for w in words if len(w) > 3 and w not in stop_words]
+        
+        # Tomar las primeras 4 palabras más importantes
+        keyword = ' '.join(important_words[:4])
+        
+        return keyword if keyword else telegram_idea[:50]
 
 def article_selector_node(state: ArticleState) -> Dict[str, Any]:
     """
-    Nodo para seleccionar qué artículo escribir basado en keywords y equilibrio de etapas.
-    Mantiene equilibrio entre conciencia, consideración y compra.
+    Nodo para seleccionar qué artículo escribir.
+    Si hay una idea de Telegram, la usa. Si no, usa keywords y equilibrio de etapas.
     """
+    
+    processing_log = state.get('processing_log', [])
+    
+    # Verificar si hay una idea de Telegram
+    if state.get('telegram_idea_mode') and state.get('telegram_idea'):
+        processing_log.append("* Procesando idea de Telegram para generar keyword SEO")
+        
+        try:
+            # Generar keyword SEO optimizada basada en la idea
+            telegram_idea = state['telegram_idea']
+            selected_keyword = generate_seo_keyword_from_idea(telegram_idea)
+            
+            # Para artículos con ideas de Telegram, usar etapa de consideración por defecto
+            # ya que normalmente las ideas son sobre servicios/productos específicos
+            selected_stage = 'consideracion'
+            
+            new_state = state.copy()
+            new_state.update({
+                'selected_keyword': selected_keyword,
+                'selected_stage': selected_stage,
+                'current_step': 'keyword_selected',
+                'processing_log': processing_log + [
+                    f"* Idea original: {telegram_idea[:100]}...",
+                    f"* Keyword SEO generada: {selected_keyword}"
+                ],
+                'supervisor_decision': 'validate_keyword'
+            })
+            
+            return new_state
+            
+        except Exception as e:
+            # Si falla la generación de keyword, usar la idea original como fallback
+            processing_log.append(f"* Error generando keyword SEO: {str(e)}")
+            processing_log.append("* Usando idea original como keyword")
+            
+            selected_stage = 'consideracion'
+            selected_keyword = state['telegram_idea']
+            
+            new_state = state.copy()
+            new_state.update({
+                'selected_keyword': selected_keyword,
+                'selected_stage': selected_stage,
+                'current_step': 'keyword_selected',
+                'processing_log': processing_log + [f"* Keyword (fallback): {selected_keyword[:100]}..."],
+                'supervisor_decision': 'validate_keyword'
+            })
+            
+            return new_state
+    
+    # Flujo normal con base de datos de keywords
+    processing_log.append("* Seleccionando keyword automaticamente desde base de datos")
     
     # Obtener base de datos
     db = next(get_db())

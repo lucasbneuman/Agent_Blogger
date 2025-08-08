@@ -1,21 +1,25 @@
 services:
   - type: web
-    name: agent-blogger-api
+    name: agent-blogger
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: python -m uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    startCommand: python api_render.py
     envVars:
       - key: DATABASE_URL
         sync: false
       - key: OPENAI_API_KEY
         sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
       - key: WP_URL
         value: https://lucasbenites.com
       - key: WP_USERNAME
         sync: false
-      - key: WP_APP_PASSWORD
+      - key: WP_PASSWORD
         sync: false
+      - key: API_SECRET_TOKEN
+        value: "your-secret-token-here"
     autoDeploy: true
     branch: main
     healthCheckPath: /

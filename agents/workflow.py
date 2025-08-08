@@ -129,6 +129,10 @@ def initialize_article_state() -> ArticleState:
         wordpress_id=None,
         is_published=False,
         
+        # Ideas de Telegram
+        telegram_idea=None,
+        telegram_idea_mode=False,
+        
         # Metadatos
         created_at=datetime.now(timezone.utc),
         processing_log=["Workflow iniciado"],
@@ -199,6 +203,77 @@ def run_article_generation_sync() -> ArticleState:
         error_state.update({
             'errors': [f"Error en workflow: {str(e)}"],
             'current_step': 'workflow_error',
+            'is_complete': True
+        })
+        
+        return error_state
+
+def run_article_generation_sync_with_idea(idea_text: str) -> ArticleState:
+    """
+    Versión síncrona del generador de artículos basado en una idea de Telegram.
+    """
+    
+    logger.info(f"Iniciando generación de artículo con idea: {idea_text[:100]}...")
+    
+    # Crear workflow
+    workflow = create_article_workflow()
+    
+    # Inicializar estado con la idea
+    initial_state = initialize_article_state()
+    initial_state.update({
+        'telegram_idea': idea_text,
+        'telegram_idea_mode': True,
+        'processing_log': [f"Workflow iniciado con idea de Telegram: {idea_text[:50]}..."]
+    })
+    
+    try:
+        # Ejecutar workflow
+        final_state = workflow.invoke(initial_state)
+        
+        logger.info(f"Workflow con idea completado. Estado final: {final_state.get('current_step')}")
+        
+        return final_state
+        
+    except Exception as e:
+        logger.error(f"Error en workflow con idea: {str(e)}")
+        
+        # Retornar estado con error
+        error_state = initial_state.copy()
+        error_state.update({
+            'errors': [f"Error en workflow: {str(e)}"],
+            'current_step': 'workflow_error',
+            'is_complete': True
+        })
+        
+        return error_state
+
+def continue_workflow_from_state(current_state: ArticleState) -> ArticleState:
+    """
+    Continúa el workflow desde un estado específico hasta completar.
+    Usado principalmente para procesar aprobaciones de Telegram.
+    """
+    
+    logger.info(f"Continuando workflow desde estado: {current_state.get('current_step')}")
+    
+    # Crear workflow
+    workflow = create_article_workflow()
+    
+    try:
+        # Continuar workflow desde estado actual
+        final_state = workflow.invoke(current_state)
+        
+        logger.info(f"Workflow continuado completado. Estado final: {final_state.get('current_step')}")
+        
+        return final_state
+        
+    except Exception as e:
+        logger.error(f"Error continuando workflow: {str(e)}")
+        
+        # Retornar estado con error
+        error_state = current_state.copy()
+        error_state.update({
+            'errors': current_state.get('errors', []) + [f"Error continuando workflow: {str(e)}"],
+            'current_step': 'workflow_continuation_error',
             'is_complete': True
         })
         

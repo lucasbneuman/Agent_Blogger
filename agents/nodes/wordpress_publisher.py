@@ -225,12 +225,20 @@ def wordpress_publisher_node(state: ArticleState) -> Dict[str, Any]:
                     print(f"    Exception creating tag: {str(e)}")
         print(f"Final tag_ids: {tag_ids}")
         
+        # Publicar directamente (sin aprobación necesaria)
+        publish_status = 'publish'
+        
+        print(f"DEBUG - Publicación directa:")
+        print(f"  current_step: {state.get('current_step')}")
+        print(f"  Estado completo contiene: {list(state.keys())}")
+        print(f"  Status determinado: {publish_status}")
+        
         # Preparar datos del post para WordPress
         post_data = {
             'title': state['title'],
             'content': full_content,
             'excerpt': state['meta_description'],
-            'status': 'draft',  # Publicar como borrador inicialmente
+            'status': publish_status,  # Publicar o borrador según aprobación
             'categories': [category_id],
             'tags': tag_ids,
             'meta': {
@@ -286,6 +294,8 @@ def wordpress_publisher_node(state: ArticleState) -> Dict[str, Any]:
         
         print(f"Enviando post a WordPress...")
         print(f"Title: {post_data['title']}")
+        print(f"Status: {publish_status} {'(PUBLICADO)' if publish_status == 'publish' else '(BORRADOR)'}")
+        print(f"Publish status: {publish_status}")
         print(f"Tags: {post_data['tags']}")
         print(f"Categories: {post_data['categories']}")
         print(f"Content preview: {full_content[:200]}...")
