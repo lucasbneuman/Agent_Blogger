@@ -27,6 +27,11 @@ app = Flask(__name__)
 # Cliente OpenAI global
 openai_client = openai.OpenAI()
 
+# Cache para prevenir procesamiento de mensajes duplicados
+processed_messages = set()
+from threading import Lock
+message_lock = Lock()
+
 @app.route('/', methods=['GET'])
 def health_check():
     """Health check para Render"""
@@ -71,8 +76,22 @@ def telegram_webhook():
             logger.info(f"IGNORANDO mensaje antiguo - Age: {message_age}s, Chat: {chat_id}")
             return jsonify({'status': 'ignored_old_message', 'age_seconds': message_age}), 200
         
+        # 4. CRÍTICO: Prevenir procesamiento de mensajes duplicados
+        with message_lock:
+            message_key = f"{chat_id}:{message_id}"
+            if message_key in processed_messages:
+                logger.info(f"IGNORANDO mensaje duplicado - Key: {message_key}")
+                return jsonify({'status': 'ignored_duplicate_message'}), 200
+            
+            # Marcar mensaje como procesado
+            processed_messages.add(message_key)
+            
+            # Limpiar cache viejo (mantener solo últimos 100 mensajes)
+            if len(processed_messages) > 100:
+                processed_messages.clear()
+        
         # Log del mensaje recibido para debug
-        logger.info(f"Mensaje recibido - Chat: {chat_id}, ID: {message_id}, Tipo: {message.get('chat', {}).get('type', 'unknown')}")
+        logger.info(f"PROCESANDO mensaje - Chat: {chat_id}, ID: {message_id}, Age: {message_age}s")
         
         # Manejar comando /start
         if 'text' in message and message['text'] == '/start':
@@ -178,11 +197,18 @@ def generate_article_from_idea(chat_id, idea):
             title = result.get('title', 'Sin título')
             wp_id = result.get('wordpress_id', 'N/A')
             keyword = result.get('selected_keyword', 'N/A')
+            category = result.get('category', 'Sin categoría')
+            tags = result.get('tags', [])
+            
+            # Log detallado para debug
+            logger.info(f"RESULTADO WORKFLOW - Title: {title}, Category: {category}, Tags: {len(tags)}, WP_ID: {wp_id}")
             
             send_telegram_message(chat_id,
                 f"Articulo completado exitosamente!\n\n"
                 f"Titulo: {title}\n"
                 f"Keyword SEO: {keyword}\n"
+                f"Categoria: {category}\n"
+                f"Tags: {len(tags)} etiquetas\n"
                 f"WordPress ID: {wp_id}\n"
                 f"Estado: Publicado\n\n"
                 f"Disponible en tu sitio web!"
