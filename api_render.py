@@ -40,7 +40,7 @@ def health_check():
 
 @app.route('/telegram-webhook', methods=['POST'])
 def telegram_webhook():
-    """Webhook para recibir mensajes de Telegram"""
+    """Webhook para recibir mensajes de Telegram - CON PROTECCIÓN ANTI-BUCLE"""
     try:
         update = request.get_json()
         
@@ -49,6 +49,18 @@ def telegram_webhook():
         
         message = update['message']
         chat_id = message['chat']['id']
+        message_id = message.get('message_id')
+        
+        # PROTECCIÓN ANTI-BUCLE: Ignorar mensajes del bot o mensajes antiguos
+        if 'from' in message and message['from'].get('is_bot', False):
+            return jsonify({'status': 'ignored_bot_message'}), 200
+        
+        # Ignorar mensajes que no son del usuario (ej: notificaciones del canal)
+        if message.get('chat', {}).get('type') != 'private':
+            return jsonify({'status': 'ignored_not_private'}), 200
+        
+        # Log del mensaje recibido para debug
+        logger.info(f"Mensaje recibido - Chat: {chat_id}, ID: {message_id}, Tipo: {message.get('chat', {}).get('type', 'unknown')}")
         
         # Manejar comando /start
         if 'text' in message and message['text'] == '/start':
@@ -65,17 +77,21 @@ def telegram_webhook():
         
         # Manejar mensajes de voz
         if 'voice' in message:
+            logger.info(f"Procesando mensaje de voz - Chat: {chat_id}")
             return handle_voice_message(chat_id, message['voice'])
         
-        # Manejar texto (ideas)
+        # Manejar texto (ideas) - SOLO si no es comando
         if 'text' in message and not message['text'].startswith('/'):
-            return handle_text_idea(chat_id, message['text'])
+            text = message['text']
+            logger.info(f"Procesando texto - Chat: {chat_id}, Texto: {text[:50]}...")
+            return handle_text_idea(chat_id, text)
         
-        return jsonify({'status': 'ignored'}), 200
+        # Ignorar otros tipos de mensajes
+        return jsonify({'status': 'ignored_unsupported'}), 200
         
     except Exception as e:
         logger.error(f"Error en webhook Telegram: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'status': 'error', 'error': str(e)}), 500
 
 def handle_voice_message(chat_id, voice):
     """Procesar mensaje de voz"""
@@ -134,29 +150,62 @@ def handle_text_idea(chat_id, text):
         return jsonify({'error': str(e)}), 500
 
 def generate_article_from_idea(chat_id, idea):
-    """Generar artículo usando la idea"""
+    """Generar artículo usando la idea - CON CONTROL DE ERRORES MEJORADO"""
     try:
+        logger.info(f"INICIANDO generación de artículo - Chat: {chat_id}")
+        
         from agents.workflow import run_article_generation_sync_with_idea
+        
+        # Enviar mensaje de inicio
+        send_telegram_message(chat_id, "🚀 Iniciando generación completa del artículo...")
         
         result = run_article_generation_sync_with_idea(idea)
         
         if result and result.get('is_complete'):
+            # Éxito total
+            title = result.get('title', 'Sin título')
+            wp_id = result.get('wordpress_id', 'N/A')
+            keyword = result.get('selected_keyword', 'N/A')
+            
             send_telegram_message(chat_id,
-                f"Articulo creado y publicado!\n\n"
-                f"Titulo: {result.get('title', 'N/A')}\n"
-                f"WordPress ID: {result.get('wordpress_id', 'N/A')}\n"
-                f"Estado: Publicado\n\n"
-                f"Disponible en tu sitio web!"
+                f"✅ Artículo completado exitosamente!\n\n"
+                f"📰 Título: {title}\n"
+                f"🔑 Keyword SEO: {keyword}\n"
+                f"🆔 WordPress ID: {wp_id}\n"
+                f"🌐 Estado: Publicado\n\n"
+                f"🎉 Disponible en tu sitio web!"
             )
-            return jsonify({'success': True, 'article_id': result.get('wordpress_id')}), 200
+            
+            logger.info(f"ÉXITO - Artículo generado: {title} (ID: {wp_id})")
+            return jsonify({'success': True, 'article_id': wp_id}), 200
+            
         else:
-            send_telegram_message(chat_id, "Error generando articulo")
-            return jsonify({'success': False}), 500
+            # Error en el workflow
+            errors = result.get('errors', []) if result else ['Workflow falló sin resultado']
+            error_msg = '; '.join(errors[-3:])  # Últimos 3 errores
+            
+            send_telegram_message(chat_id, 
+                f"❌ Error generando artículo\n\n"
+                f"💡 Tu idea: {idea[:100]}...\n\n"
+                f"🔍 Detalles: {error_msg}\n\n"
+                f"💬 Intenta con una idea más específica."
+            )
+            
+            logger.error(f"FALLO workflow - Chat: {chat_id}, Errores: {error_msg}")
+            return jsonify({'success': False, 'errors': errors}), 500
             
     except Exception as e:
-        logger.error(f"Error generando articulo: {e}")
-        send_telegram_message(chat_id, f"Error: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        error_str = str(e)
+        logger.error(f"EXCEPCIÓN generando artículo - Chat: {chat_id}, Error: {error_str}")
+        
+        send_telegram_message(chat_id, 
+            f"❌ Error del sistema\n\n"
+            f"💡 Tu idea: {idea[:100]}...\n\n"
+            f"⚠️ Error técnico: {error_str}\n\n"
+            f"🔄 Por favor intenta de nuevo en unos minutos."
+        )
+        
+        return jsonify({'success': False, 'error': error_str}), 500
 
 def get_telegram_file_url(file_id):
     """Obtener URL de archivo de Telegram"""
