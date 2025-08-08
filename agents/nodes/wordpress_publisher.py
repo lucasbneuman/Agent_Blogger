@@ -235,6 +235,11 @@ def wordpress_publisher_node(state: ArticleState) -> Dict[str, Any]:
         # Publicar directamente (sin aprobación necesaria)
         publish_status = 'publish'
         
+        print(f"DEBUG POST DATA:")
+        print(f"  Categories to send: {[category_id]}")
+        print(f"  Tags to send: {tag_ids}")
+        print(f"  Status: {publish_status}")
+        
         print(f"DEBUG - Publicación directa:")
         print(f"  current_step: {state.get('current_step')}")
         print(f"  Estado completo contiene: {list(state.keys())}")

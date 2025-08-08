@@ -35,15 +35,22 @@ def internal_links_node(state: ArticleState) -> Dict[str, Any]:
             Article.is_published == True
         ).all()
         
+        # DEBUG: Log de artículos encontrados
+        print(f"DEBUG INTERNAL LINKS:")
+        print(f"  Total articles in DB: {db.query(Article).count()}")
+        print(f"  Published articles found: {len(existing_articles)}")
+        
         if not existing_articles:
             # Si no hay artículos existentes, continuar sin enlaces internos
             processing_log = state.get('processing_log', [])
             processing_log.append("No hay artículos existentes para enlaces internos")
             
+            print(f"  No published articles - skipping internal links")
+            
             new_state = state.copy()
             new_state.update({
                 'internal_links': [],
-                'current_step': 'internal_links_skipped',
+                'current_step': 'internal_links_skipped', 
                 'processing_log': processing_log
             })
             return new_state
