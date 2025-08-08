@@ -179,6 +179,13 @@ def wordpress_publisher_node(state: ArticleState) -> Dict[str, Any]:
         category = db.query(Category).filter(Category.name == state['category']).first()
         category_id = category.wordpress_id if category and category.wordpress_id else 1
         
+        # DEBUG: Log detallado de categoría
+        print(f"DEBUG CATEGORIA:")
+        print(f"  Categoria del estado: {state['category']}")
+        print(f"  Categoria encontrada en BD: {category.name if category else 'None'}")
+        print(f"  WordPress ID: {category.wordpress_id if category else 'None'}")
+        print(f"  Category ID final: {category_id}")
+        
         # Obtener IDs de etiquetas de WordPress (crear si no existen)
         tag_ids = []
         print(f"Buscando etiquetas en BD: {state['tags']}")

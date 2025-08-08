@@ -30,47 +30,47 @@ def image_creator_node(state: ArticleState) -> Dict[str, Any]:
         content_preview = state.get('content', '')[:500]  # Obtener preview del contenido
         
         image_prompt_generator = f"""
-        Analiza este artículo y crea un prompt ESPECÍFICO y CONTEXTUAL en inglés para DALL-E:
+        Crea un prompt ESPECÍFICO para DALL-E que genere una imagen REALISTA para PYMES (pequeñas y medianas empresas):
         
         TÍTULO: {title}
         KEYWORD: {keyword}
         ETAPA: {stage}
-        CONTENIDO (preview): {content_preview}...
+        CONTENIDO: {content_preview}...
         
-        INSTRUCCIONES PARA CREAR EL PROMPT:
+        REQUISITOS OBLIGATORIOS PARA PYMES:
         
-        1. IDENTIFICA EL CONTEXTO ESPECÍFICO:
-        - Si menciona consultorio médico → imagen en consultorio/clínica
-        - Si habla de restaurante → imagen en restaurante/cocina
-        - Si es sobre fábrica → imagen en planta industrial
-        - Si es oficina → imagen en oficina moderna
-        - Si es e-commerce → imagen en almacén/tienda online
-        - Si es sobre educación → imagen en aula/centro educativo
+        1. CONTEXTO ESPECÍFICO DE PYME (NO corporativo):
+        - Si es transporte → pequeña empresa de logística, camiones medianos
+        - Si es restaurante → restaurante familiar, cocina casera profesional
+        - Si es consultoría → oficina pequeña, emprendedores, ambiente acogedor
+        - Si es médico → consultorio privado pequeño, clínica familiar
+        - Si es comercio → tienda local, negocio familiar
         
-        2. INCLUYE PROTAGONISTAS ESPECÍFICOS:
-        - Profesionales del sector mencionado (médicos, chefs, ingenieros, etc.)
-        - Personas reales y diversas
-        - Vestimenta apropiada al contexto
-        - Expresiones de confianza y profesionalismo
+        2. PERSONAS REALES DE PYME:
+        - Propietarios/emprendedores (30-50 años)
+        - Equipos pequeños (2-4 personas máximo)
+        - Vestimenta profesional pero casual
+        - Diversidad étnica (latinos, argentinos)
+        - Expresiones amigables y cercanas
         
-        3. AMBIENTE REALISTA Y ESPECÍFICO:
-        - Ubicación específica según el tema
-        - Herramientas/equipos del sector
-        - Detalles que den credibilidad
-        - Iluminación natural y profesional
+        3. AMBIENTE PYME REALISTA:
+        - Espacios más pequeños e íntimos
+        - Decoración moderna pero accesible
+        - Tecnología práctica (laptops, tablets)
+        - Colores cálidos y variados (NO solo azul corporativo)
+        - Iluminación natural y acogedora
         
-        4. ESTILO FOTOGRÁFICO:
-        - "Professional corporate photography"
-        - "High-resolution realistic photo"
-        - "Natural lighting, sharp focus"
-        - "Modern [specific industry] setting"
+        4. COLORES Y ESTILO:
+        - Paleta variada: naranjas, verdes, amarillos, rojos
+        - Evitar azul corporativo dominante
+        - Atmósfera cálida y humana
+        - Estilo "documentary photography"
         
-        EJEMPLOS DE CONTEXTOS:
-        - Artículo sobre IA en medicina → "Professional medical team using AI technology in modern hospital, doctors and nurses collaborating with computers, clinical setting"
-        - Artículo sobre automatización en restaurantes → "Professional chefs and restaurant staff using digital ordering systems, modern commercial kitchen"
-        - Artículo sobre pymes → "Small business owners working together in modern office, diverse team collaborating"
+        EJEMPLOS ESPECÍFICOS:
+        - IA en transporte → "Friendly logistics small business owners planning routes with tablets in warehouse, warm lighting, diverse Latin American entrepreneurs, orange and green color scheme"
+        - Automatización restaurante → "Family restaurant owners using digital ordering system, cozy dining space, warm colors, authentic small business atmosphere"
         
-        Crea un prompt MUY ESPECÍFICO en inglés que capture el contexto exacto del artículo. Responde SOLO con el prompt.
+        Crea un prompt MUY ESPECÍFICO en inglés que capture un negocio PYME real y auténtico. Responde SOLO con el prompt.
         """
         
         prompt_response = client.chat.completions.create(
