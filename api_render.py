@@ -183,16 +183,33 @@ def handle_text_idea(chat_id, text):
 def generate_article_from_idea(chat_id, idea):
     """Generar artículo usando la idea - CON CONTROL DE ERRORES MEJORADO"""
     try:
+        import sys
         logger.info(f"INICIANDO generación de artículo - Chat: {chat_id}")
+        print(f"*** TELEGRAM FLOW: INICIANDO GENERACION ***", flush=True)
+        print(f"Chat ID: {chat_id}", flush=True)
+        print(f"Idea: {idea}", flush=True)
+        sys.stdout.flush()
         
         from agents.workflow import run_article_generation_sync_with_idea
         
         # Enviar mensaje de inicio
         send_telegram_message(chat_id, "Iniciando generacion completa del articulo...")
         
+        print(f"*** TELEGRAM FLOW: LLAMANDO WORKFLOW ***", flush=True)
+        sys.stdout.flush()
+        
         result = run_article_generation_sync_with_idea(idea)
         
+        print(f"*** TELEGRAM FLOW: WORKFLOW COMPLETADO ***", flush=True)
+        print(f"Result category: {result.get('category')}", flush=True)
+        print(f"Result tags: {result.get('tags')}", flush=True)
+        print(f"Result WordPress ID: {result.get('wordpress_id')}", flush=True)
+        sys.stdout.flush()
+        
         if result and result.get('is_complete'):
+            print(f"*** TELEGRAM FLOW: RESULTADO EXITOSO ***", flush=True)
+            sys.stdout.flush()
+            
             # Éxito total
             title = result.get('title', 'Sin título')
             wp_id = result.get('wordpress_id', 'N/A')

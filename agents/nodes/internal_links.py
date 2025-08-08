@@ -35,10 +35,12 @@ def internal_links_node(state: ArticleState) -> Dict[str, Any]:
             Article.is_published == True
         ).all()
         
-        # DEBUG: Log de artículos encontrados
-        print(f"DEBUG INTERNAL LINKS:")
-        print(f"  Total articles in DB: {db.query(Article).count()}")
-        print(f"  Published articles found: {len(existing_articles)}")
+        # DEBUG FORZADO PARA RENDER
+        import sys
+        print(f"*** DEBUG INTERNAL LINKS ***", flush=True)
+        print(f"  Total articles in DB: {db.query(Article).count()}", flush=True)
+        print(f"  Published articles found: {len(existing_articles)}", flush=True)
+        sys.stdout.flush()
         
         if not existing_articles:
             # Si no hay artículos existentes, continuar sin enlaces internos

@@ -9,6 +9,24 @@ from agents.nodes.internal_links import internal_links_node
 from agents.nodes.cta_creator import cta_creator_node
 from agents.nodes.reviewer import reviewer_node, quality_checker_node
 from agents.nodes.wordpress_publisher import wordpress_publisher_node, article_assembler_node
+
+# Wrapper con logging forzado para Render
+def wordpress_publisher_with_logging(state):
+    import sys
+    print("\n*** WRAPPER: INICIANDO WORDPRESS PUBLISHER ***", flush=True)
+    print(f"Estado actual: {state.get('current_step')}", flush=True)
+    print(f"Categoria: {state.get('category')}", flush=True)
+    print(f"Tags: {state.get('tags')}", flush=True)
+    sys.stdout.flush()
+    
+    result = wordpress_publisher_node(state)
+    
+    print(f"*** WRAPPER: WORDPRESS PUBLISHER COMPLETADO ***", flush=True)
+    print(f"Resultado: {result.get('current_step')}", flush=True)
+    print(f"WordPress ID: {result.get('wordpress_id')}", flush=True)
+    sys.stdout.flush()
+    
+    return result
 from datetime import datetime, timezone
 import logging
 
@@ -39,7 +57,7 @@ def create_article_workflow() -> StateGraph:
     workflow.add_node("reviewer", reviewer_node)
     workflow.add_node("quality_checker", quality_checker_node)
     workflow.add_node("article_assembler", article_assembler_node)
-    workflow.add_node("wordpress_publisher", wordpress_publisher_node)
+    workflow.add_node("wordpress_publisher", wordpress_publisher_with_logging)
     
     # Definir el punto de entrada
     workflow.set_entry_point("supervisor")

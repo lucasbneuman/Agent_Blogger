@@ -26,12 +26,23 @@ def categorizer_node(state: ArticleState) -> Dict[str, Any]:
         })
         return new_state
     
-    # Obtener categorías disponibles de la base de datos
+    # Obtener categorías disponibles de la base de datos - CON DEBUGGING FORZADO
+    import sys
+    print(f"*** CATEGORIZER: INICIANDO ***", flush=True)
+    sys.stdout.flush()
+    
     db = next(get_db())
     
     try:
         categories = db.query(Category).all()
         category_list = [cat.name for cat in categories]
+        
+        print(f"*** CATEGORIZER DEBUG ***", flush=True)
+        print(f"  Total categories in DB: {len(categories)}", flush=True)
+        print(f"  Categories found: {category_list}", flush=True)
+        for cat in categories:
+            print(f"    - {cat.name} -> WP ID: {cat.wordpress_id}", flush=True)
+        sys.stdout.flush()
         
         prompt = f"""
         Analiza este artículo y selecciona la categoría más apropiada y crea etiquetas relevantes.

@@ -174,17 +174,23 @@ def wordpress_publisher_node(state: ArticleState) -> Dict[str, Any]:
             cta_link_html = f'<p><a href="{state["cta_link"]}" target="_blank" rel="noopener">👉 Hacer clic aquí</a></p>'
             full_content += "\n\n" + cta_link_html
         
+        # LOGGING FORZADO PARA RENDER
+        import sys
+        print("*** INICIANDO WORDPRESS PUBLISHER ***", flush=True)
+        sys.stdout.flush()
+        
         # Obtener ID de categoría de WordPress
         db = next(get_db())
         category = db.query(Category).filter(Category.name == state['category']).first()
         category_id = category.wordpress_id if category and category.wordpress_id else 1
         
-        # DEBUG: Log detallado de categoría
-        print(f"DEBUG CATEGORIA:")
-        print(f"  Categoria del estado: {state['category']}")
-        print(f"  Categoria encontrada en BD: {category.name if category else 'None'}")
-        print(f"  WordPress ID: {category.wordpress_id if category else 'None'}")
-        print(f"  Category ID final: {category_id}")
+        # DEBUG FORZADO PARA RENDER
+        print(f"*** DEBUG CATEGORIA ***", flush=True)
+        print(f"  Categoria del estado: {state['category']}", flush=True)
+        print(f"  Categoria encontrada en BD: {category.name if category else 'None'}", flush=True)
+        print(f"  WordPress ID: {category.wordpress_id if category else 'None'}", flush=True)
+        print(f"  Category ID final: {category_id}", flush=True)
+        sys.stdout.flush()
         
         # Obtener IDs de etiquetas de WordPress (crear si no existen)
         tag_ids = []
@@ -235,10 +241,11 @@ def wordpress_publisher_node(state: ArticleState) -> Dict[str, Any]:
         # Publicar directamente (sin aprobación necesaria)
         publish_status = 'publish'
         
-        print(f"DEBUG POST DATA:")
-        print(f"  Categories to send: {[category_id]}")
-        print(f"  Tags to send: {tag_ids}")
-        print(f"  Status: {publish_status}")
+        print(f"*** DEBUG POST DATA ***", flush=True)
+        print(f"  Categories to send: {[category_id]}", flush=True)
+        print(f"  Tags to send: {tag_ids}", flush=True)
+        print(f"  Status: {publish_status}", flush=True)
+        sys.stdout.flush()
         
         print(f"DEBUG - Publicación directa:")
         print(f"  current_step: {state.get('current_step')}")
@@ -304,15 +311,16 @@ def wordpress_publisher_node(state: ArticleState) -> Dict[str, Any]:
         # Realizar petición a WordPress REST API
         wp_api_url = f"{wp_url}/wp-json/wp/v2/posts"
         
-        print(f"Enviando post a WordPress...")
-        print(f"Title: {post_data['title']}")
-        print(f"Status: {publish_status} {'(PUBLICADO)' if publish_status == 'publish' else '(BORRADOR)'}")
-        print(f"Publish status: {publish_status}")
-        print(f"Tags: {post_data['tags']}")
-        print(f"Categories: {post_data['categories']}")
-        print(f"Content preview: {full_content[:200]}...")
-        print(f"Excerpt: {post_data['excerpt']}")
-        print(f"Meta keys: {list(post_data['meta'].keys())}")
+        print(f"*** ENVIANDO POST A WORDPRESS ***", flush=True)
+        print(f"Title: {post_data['title']}", flush=True)
+        print(f"Status: {publish_status} {'(PUBLICADO)' if publish_status == 'publish' else '(BORRADOR)'}", flush=True)
+        print(f"Publish status: {publish_status}", flush=True)
+        print(f"Tags: {post_data['tags']}", flush=True)
+        print(f"Categories: {post_data['categories']}", flush=True)
+        print(f"Content preview: {full_content[:200]}...", flush=True)
+        print(f"Excerpt: {post_data['excerpt']}", flush=True)
+        print(f"Meta keys: {list(post_data['meta'].keys())}", flush=True)
+        sys.stdout.flush()
         
         response = requests.post(
             wp_api_url,
