@@ -34,6 +34,7 @@ def health_check():
         'status': 'active',
         'service': 'Agent Blogger API v2.0',
         'telegram_mode': 'webhooks',
+        'version': 'webhook-fixed',
         'timestamp': datetime.now().isoformat(),
     })
 
