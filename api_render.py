@@ -50,14 +50,26 @@ def telegram_webhook():
         message = update['message']
         chat_id = message['chat']['id']
         message_id = message.get('message_id')
+        message_date = message.get('date', 0)
         
-        # PROTECCIÓN ANTI-BUCLE: Ignorar mensajes del bot o mensajes antiguos
+        # PROTECCIÓN ANTI-BUCLE MEJORADA
+        
+        # 1. Ignorar mensajes del bot
         if 'from' in message and message['from'].get('is_bot', False):
             return jsonify({'status': 'ignored_bot_message'}), 200
         
-        # Ignorar mensajes que no son del usuario (ej: notificaciones del canal)
+        # 2. Ignorar mensajes que no son chats privados
         if message.get('chat', {}).get('type') != 'private':
             return jsonify({'status': 'ignored_not_private'}), 200
+        
+        # 3. CRÍTICO: Ignorar mensajes antiguos (más de 60 segundos)
+        import time
+        current_timestamp = int(time.time())
+        message_age = current_timestamp - message_date
+        
+        if message_age > 60:  # Mensaje más viejo de 1 minuto
+            logger.info(f"IGNORANDO mensaje antiguo - Age: {message_age}s, Chat: {chat_id}")
+            return jsonify({'status': 'ignored_old_message', 'age_seconds': message_age}), 200
         
         # Log del mensaje recibido para debug
         logger.info(f"Mensaje recibido - Chat: {chat_id}, ID: {message_id}, Tipo: {message.get('chat', {}).get('type', 'unknown')}")
