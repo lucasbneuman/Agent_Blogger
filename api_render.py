@@ -157,7 +157,7 @@ def generate_article_from_idea(chat_id, idea):
         from agents.workflow import run_article_generation_sync_with_idea
         
         # Enviar mensaje de inicio
-        send_telegram_message(chat_id, "🚀 Iniciando generación completa del artículo...")
+        send_telegram_message(chat_id, "Iniciando generacion completa del articulo...")
         
         result = run_article_generation_sync_with_idea(idea)
         
@@ -168,12 +168,12 @@ def generate_article_from_idea(chat_id, idea):
             keyword = result.get('selected_keyword', 'N/A')
             
             send_telegram_message(chat_id,
-                f"✅ Artículo completado exitosamente!\n\n"
-                f"📰 Título: {title}\n"
-                f"🔑 Keyword SEO: {keyword}\n"
-                f"🆔 WordPress ID: {wp_id}\n"
-                f"🌐 Estado: Publicado\n\n"
-                f"🎉 Disponible en tu sitio web!"
+                f"Articulo completado exitosamente!\n\n"
+                f"Titulo: {title}\n"
+                f"Keyword SEO: {keyword}\n"
+                f"WordPress ID: {wp_id}\n"
+                f"Estado: Publicado\n\n"
+                f"Disponible en tu sitio web!"
             )
             
             logger.info(f"ÉXITO - Artículo generado: {title} (ID: {wp_id})")
@@ -185,10 +185,10 @@ def generate_article_from_idea(chat_id, idea):
             error_msg = '; '.join(errors[-3:])  # Últimos 3 errores
             
             send_telegram_message(chat_id, 
-                f"❌ Error generando artículo\n\n"
-                f"💡 Tu idea: {idea[:100]}...\n\n"
-                f"🔍 Detalles: {error_msg}\n\n"
-                f"💬 Intenta con una idea más específica."
+                f"Error generando articulo\n\n"
+                f"Tu idea: {idea[:100]}...\n\n"
+                f"Detalles: {error_msg}\n\n"
+                f"Intenta con una idea mas especifica."
             )
             
             logger.error(f"FALLO workflow - Chat: {chat_id}, Errores: {error_msg}")
@@ -199,10 +199,10 @@ def generate_article_from_idea(chat_id, idea):
         logger.error(f"EXCEPCIÓN generando artículo - Chat: {chat_id}, Error: {error_str}")
         
         send_telegram_message(chat_id, 
-            f"❌ Error del sistema\n\n"
-            f"💡 Tu idea: {idea[:100]}...\n\n"
-            f"⚠️ Error técnico: {error_str}\n\n"
-            f"🔄 Por favor intenta de nuevo en unos minutos."
+            f"Error del sistema\n\n"
+            f"Tu idea: {idea[:100]}...\n\n"
+            f"Error tecnico: {error_str}\n\n"
+            f"Por favor intenta de nuevo en unos minutos."
         )
         
         return jsonify({'success': False, 'error': error_str}), 500
