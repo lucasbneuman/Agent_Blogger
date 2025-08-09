@@ -24,6 +24,20 @@ logger = logging.getLogger(__name__)
 # Crear app Flask
 app = Flask(__name__)
 
+# CRITICO: Sincronizar categorías al iniciar la aplicación
+def sync_categories_on_startup():
+    """Sincronizar WordPress IDs de categorías al iniciar"""
+    try:
+        logger.info("INICIANDO sincronización de categorías...")
+        from sync_wordpress_categories import sync_wordpress_category_ids
+        updated_count = sync_wordpress_category_ids()
+        logger.info(f"Sincronización completada: {updated_count} categorías actualizadas")
+    except Exception as e:
+        logger.error(f"Error sincronizando categorías: {e}")
+
+# Ejecutar sincronización al iniciar
+sync_categories_on_startup()
+
 # Cliente OpenAI global
 openai_client = openai.OpenAI()
 
