@@ -394,11 +394,25 @@ def status():
     try:
         # Verificar base de datos
         from database import get_db
+        from database.models import Article, Category, Tag
         db = next(get_db())
         
         # Contar artículos
-        from database.models import Article
         total_articles = db.query(Article).count()
+        
+        # CRÍTICO: Verificar estado de categorías
+        categories = db.query(Category).all()
+        category_status = []
+        for cat in categories:
+            category_status.append({
+                'name': cat.name,
+                'slug': cat.slug,
+                'wordpress_id': cat.wordpress_id,
+                'has_wp_id': bool(cat.wordpress_id)
+            })
+        
+        # Contar tags
+        total_tags = db.query(Tag).count()
         
         db.close()
         
@@ -407,6 +421,10 @@ def status():
             'telegram_mode': 'webhooks',
             'database': 'connected',
             'total_articles': total_articles,
+            'total_categories': len(categories),
+            'categories_with_wp_id': len([c for c in categories if c.wordpress_id]),
+            'category_details': category_status,
+            'total_tags': total_tags,
             'timestamp': datetime.now().isoformat()
         })
         

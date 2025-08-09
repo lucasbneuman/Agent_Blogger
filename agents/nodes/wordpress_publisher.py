@@ -180,8 +180,15 @@ def wordpress_publisher_node(state: ArticleState) -> Dict[str, Any]:
         category = db.query(Category).filter(Category.name == state['category']).first()
         category_id = category.wordpress_id if category and category.wordpress_id else 1
         
-        # Log esencial de categoría
-        print(f"CATEGORIA: {state['category']} -> WP ID: {category.wordpress_id if category else 'None'} -> Final: {category_id}", flush=True)
+        # DEBUGGING CRITICO DE CATEGORIA - FORZAR VISIBILIDAD
+        import sys
+        print("\n" + "="*60, flush=True)
+        print(f"*** WORDPRESS PUBLISHER DEBUG ***", flush=True)
+        print(f"Categoria del estado: '{state['category']}'", flush=True)
+        print(f"Categoria encontrada en BD: {category.name if category else 'None'}", flush=True)
+        print(f"WordPress ID en BD: {category.wordpress_id if category else 'None'}", flush=True)
+        print(f"Category ID final a enviar: {category_id}", flush=True)
+        print("="*60 + "\n", flush=True)
         sys.stdout.flush()
         
         # Obtener IDs de etiquetas de WordPress (crear si no existen)
@@ -246,7 +253,14 @@ def wordpress_publisher_node(state: ArticleState) -> Dict[str, Any]:
         # Publicar directamente (sin aprobación necesaria)
         publish_status = 'publish'
         
-        print(f"ENVIANDO: Cat=[{category_id}] Tags={tag_ids} Status={publish_status}", flush=True)
+        # DEBUGGING CRITICO FINAL ANTES DE ENVIAR
+        print("\n" + "-"*40, flush=True)
+        print(f">>> ENVIANDO A WORDPRESS <<<", flush=True)
+        print(f"Category ID: [{category_id}]", flush=True)
+        print(f"Tag IDs: {tag_ids}", flush=True)
+        print(f"Status: {publish_status}", flush=True)
+        print("-"*40 + "\n", flush=True)
+        sys.stdout.flush()
         
         # Comentado para reducir logs
         # print(f"Estado: {state.get('current_step')} -> {publish_status}")
@@ -319,7 +333,10 @@ def wordpress_publisher_node(state: ArticleState) -> Dict[str, Any]:
             headers={'Content-Type': 'application/json'}
         )
         
-        print(f"WordPress response: {response.status_code}")
+        print(f"\n*** WORDPRESS RESPONSE: {response.status_code} ***", flush=True)
+        if response.status_code not in [200, 201]:
+            print(f"ERROR RESPONSE: {response.text[:500]}", flush=True)
+        sys.stdout.flush()
         
         if response.status_code in [200, 201]:
             # Post creado exitosamente
