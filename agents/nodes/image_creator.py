@@ -39,12 +39,16 @@ def image_creator_node(state: ArticleState) -> Dict[str, Any]:
         
         REQUISITOS OBLIGATORIOS PARA PYMES:
         
-        1. CONTEXTO ESPECÍFICO DE PYME (NO corporativo):
-        - Si es transporte → pequeña empresa de logística, camiones medianos
-        - Si es restaurante → restaurante familiar, cocina casera profesional
-        - Si es consultoría → oficina pequeña, emprendedores, ambiente acogedor
-        - Si es médico → consultorio privado pequeño, clínica familiar
-        - Si es comercio → tienda local, negocio familiar
+        1. CONTEXTO ESPECÍFICO DE PYME (NO corporativo) - ANALIZAR EL TEMA PARA ELEGIR:
+        - Si es IA/tecnología → oficina pequeña moderna, emprendedores con laptops
+        - Si es automatización → taller, fábrica pequeña, o negocio usando tablets
+        - Si es atención al cliente → oficina de servicios, recepción acogedora
+        - Si es marketing → agencia pequeña, equipo creativo, pantallas
+        - Si es consultoría → sala de reuniones pequeña, ambiente profesional
+        - Si es transporte/logística → depósito, camiones, planificación
+        - Si es salud → consultorio, clínica familiar
+        - Si es comercio → tienda, punto de venta, atención personalizada
+        - Si es general → oficina PYME diversa, equipo trabajando
         
         2. PERSONAS REALES DE PYME:
         - Propietarios/emprendedores (30-50 años)
@@ -66,9 +70,12 @@ def image_creator_node(state: ArticleState) -> Dict[str, Any]:
         - Atmósfera cálida y humana
         - Estilo "documentary photography"
         
-        EJEMPLOS ESPECÍFICOS:
-        - IA en transporte → "Friendly logistics small business owners planning routes with tablets in warehouse, warm lighting, diverse Latin American entrepreneurs, orange and green color scheme"
-        - Automatización restaurante → "Family restaurant owners using digital ordering system, cozy dining space, warm colors, authentic small business atmosphere"
+        EJEMPLOS ESPECÍFICOS POR TEMA:
+        - IA para PYMES → "Small business team working with AI tools on laptops in modern cozy office, diverse entrepreneurs, warm lighting, orange and blue accents"
+        - Automatización procesos → "Small manufacturing business owners reviewing automated systems on tablets, workshop setting, friendly atmosphere"
+        - Atención al cliente → "PYME customer service team using modern tools in welcoming office, personal touch, warm colors"
+        - Marketing digital → "Small creative agency team planning campaigns, collaborative workspace, energetic but intimate setting"
+        - Consultoría empresarial → "Business consultants meeting with PYME owners in comfortable conference room, professional yet approachable"
         
         Crea un prompt MUY ESPECÍFICO en inglés que capture un negocio PYME real y auténtico. Responde SOLO con el prompt.
         """

@@ -442,6 +442,64 @@ def setup_webhook():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/', methods=['GET'])
+def home():
+    """Ruta de health check"""
+    return jsonify({
+        'status': 'Agent Blogger API activa',
+        'webhook_url': '/telegram-webhook',
+        'auto_publish_url': '/auto-publish',
+        'health': 'OK'
+    }), 200
+
+@app.route('/auto-publish', methods=['GET', 'POST'])
+def auto_publish_article():
+    """Endpoint para publicación automática desde keywords"""
+    try:
+        logger.info("INICIANDO publicación automática desde keywords")
+        
+        from agents.workflow import run_article_generation_sync
+        
+        # Generar artículo usando el sistema original (sin idea de Telegram)
+        result = run_article_generation_sync()
+        
+        if result and result.get('is_complete') and result.get('wordpress_id'):
+            # Éxito
+            title = result.get('title', 'Sin título')
+            wp_id = result.get('wordpress_id', 'N/A')
+            keyword = result.get('selected_keyword', 'N/A')
+            category = result.get('category', 'Sin categoría')
+            
+            logger.info(f"ARTÍCULO AUTO-PUBLICADO: {title} (ID: {wp_id})")
+            
+            return jsonify({
+                'success': True,
+                'title': title,
+                'wordpress_id': wp_id,
+                'keyword': keyword,
+                'category': category,
+                'method': 'auto-publish'
+            }), 200
+            
+        else:
+            # Error
+            errors = result.get('errors', []) if result else ['Error desconocido']
+            logger.error(f"Error en auto-publicación: {errors}")
+            
+            return jsonify({
+                'success': False,
+                'errors': errors,
+                'method': 'auto-publish'
+            }), 500
+            
+    except Exception as e:
+        logger.error(f"Error crítico en auto-publicación: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'method': 'auto-publish'
+        }), 500
+
 if __name__ == "__main__":
     # Inicializar sistema
     logger.info("Iniciando Agent Blogger API v2.0 para Render (Webhooks)...")
@@ -472,8 +530,9 @@ if __name__ == "__main__":
     logger.info("Telegram funcionando con WEBHOOKS (no polling)")
     logger.info("Endpoints disponibles:")
     logger.info("  GET  / - Health check")
-    logger.info("  POST /telegram-webhook - Webhook de Telegram")
-    logger.info("  POST /generate-article - Generar artículo automático")
+    logger.info("  POST /telegram-webhook - Webhook de Telegram (ideas de audio/texto)")
+    logger.info("  GET/POST /auto-publish - Publicación automática desde keywords")
+    logger.info("  POST /generate-article - Generar artículo automático (legacy)")
     logger.info("  GET  /status - Estado del sistema")
     logger.info("  POST /setup-webhook - Configurar webhook Telegram")
     
