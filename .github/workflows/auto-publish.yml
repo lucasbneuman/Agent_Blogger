@@ -1,0 +1,65 @@
+name: Auto Publish Articles Daily
+
+on:
+  schedule:
+    # 3 publicaciones por día - Horario Argentina (UTC-3)
+    - cron: '0 12 * * *'  # 9:00 AM Argentina
+    - cron: '0 16 * * *'  # 1:00 PM Argentina  
+    - cron: '0 20 * * *'  # 5:00 PM Argentina
+  
+  # Permitir ejecución manual desde GitHub
+  workflow_dispatch:
+
+jobs:
+  auto-publish:
+    runs-on: ubuntu-latest
+    name: Publicar Artículo Automáticamente
+    
+    steps:
+      - name: Llamar endpoint de auto-publicación
+        run: |
+          echo "🚀 Iniciando publicación automática..."
+          
+          response=$(curl -s -w "HTTPSTATUS:%{http_code}" \
+            -X GET \
+            -H "User-Agent: GitHub-Actions-AutoPublish" \
+            ${{ secrets.RENDER_URL }}/auto-publish)
+          
+          # Extraer código de estado HTTP
+          http_code=$(echo $response | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+          body=$(echo $response | sed -E 's/HTTPSTATUS:[0-9]{3}$//')
+          
+          echo "📊 Código de respuesta: $http_code"
+          echo "📄 Respuesta del servidor:"
+          echo "$body"
+          
+          # Verificar si fue exitoso
+          if [ $http_code -eq 200 ]; then
+            echo "✅ ¡Artículo publicado exitosamente!"
+            
+            # Extraer información del artículo si está disponible
+            title=$(echo "$body" | grep -o '"title":"[^"]*"' | cut -d'"' -f4)
+            wp_id=$(echo "$body" | grep -o '"wordpress_id":[^,}]*' | cut -d':' -f2)
+            
+            if [ ! -z "$title" ]; then
+              echo "📝 Título: $title"
+            fi
+            
+            if [ ! -z "$wp_id" ]; then
+              echo "🔗 WordPress ID: $wp_id"
+            fi
+            
+          else
+            echo "❌ Error en la publicación - Código: $http_code"
+            echo "🔍 Detalles del error: $body"
+            exit 1
+          fi
+      
+      - name: Enviar notificación de estado
+        if: always()
+        run: |
+          if [ $? -eq 0 ]; then
+            echo "🎉 Workflow completado exitosamente"
+          else
+            echo "💥 Workflow falló - revisar logs"
+          fi
