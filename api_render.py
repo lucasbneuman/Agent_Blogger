@@ -220,6 +220,29 @@ def generate_article_from_idea(chat_id, idea):
             # Log detallado para debug
             logger.info(f"RESULTADO WORKFLOW - Title: {title}, Category: {category}, Tags: {len(tags)}, WP_ID: {wp_id}")
             
+            # DEBUGGING CRITICO: Verificar categoria en BD
+            debug_info = ""
+            try:
+                from database import get_db
+                from database.models import Category
+                db = next(get_db())
+                if category and category != 'Sin categoría':
+                    cat = db.query(Category).filter(Category.name == category).first()
+                    if cat:
+                        debug_info = f"\n\n* DEBUG INFO *\nCategoria encontrada en BD: {cat.name}\nWordPress ID en BD: {cat.wordpress_id}\nSlug: {cat.slug}"
+                    else:
+                        debug_info = f"\n\n* ERROR CRITICO *\nCategoria '{category}' NO encontrada en BD"
+                        # Listar categorías disponibles
+                        available_cats = db.query(Category).all()
+                        debug_info += f"\nCategorías disponibles: {len(available_cats)}"
+                        for cat in available_cats[:3]:  # Solo las primeras 3
+                            debug_info += f"\n- {cat.name}"
+                else:
+                    debug_info = f"\n\n* ERROR *\nNo hay categoria asignada"
+                db.close()
+            except Exception as e:
+                debug_info = f"\n\n* ERROR BD *\n{str(e)}"
+            
             send_telegram_message(chat_id,
                 f"Articulo completado exitosamente!\n\n"
                 f"Titulo: {title}\n"
@@ -229,6 +252,7 @@ def generate_article_from_idea(chat_id, idea):
                 f"WordPress ID: {wp_id}\n"
                 f"Estado: Publicado\n\n"
                 f"Disponible en tu sitio web!"
+                f"{debug_info}"
             )
             
             logger.info(f"ÉXITO - Artículo generado: {title} (ID: {wp_id})")
