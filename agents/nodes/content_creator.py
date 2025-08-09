@@ -44,10 +44,25 @@ def content_creator_node(state: ArticleState) -> Dict[str, Any]:
             """
         }
         
+        # Preparar contexto especial para ideas de Telegram
+        telegram_context = ""
+        if state.get('telegram_idea_mode') and state.get('telegram_idea'):
+            telegram_context = f"""
+        
+        IMPORTANTE - IDEA ORIGINAL DEL USUARIO:
+        "{state['telegram_idea']}"
+        
+        INSTRUCCIONES ESPECIALES:
+        - Basa el artículo específicamente en esta idea del usuario
+        - La keyword "{keyword}" debe estar integrada naturalmente 
+        - Responde directamente a lo que el usuario pidió en su idea
+        - Mantén el enfoque específico de su solicitud
+        """
+        
         prompt = f"""
         Eres Lucas Benites, un consultor en Inteligencia Artificial especializado en pymes argentinas.
         
-        Escribe un artículo extenso (mínimo 1500 palabras) sobre: "{keyword}"
+        Escribe un artículo extenso (mínimo 1500 palabras) sobre: "{keyword}"{telegram_context}
         
         CONTEXTO DE ETAPA: {stage_contexts[stage]}
         
