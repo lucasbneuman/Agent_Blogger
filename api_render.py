@@ -35,8 +35,7 @@ def sync_categories_on_startup():
     except Exception as e:
         logger.error(f"Error sincronizando categorías: {e}")
 
-# Ejecutar sincronización al iniciar
-sync_categories_on_startup()
+# NO ejecutar aquí - se ejecutará después de inicializar BD
 
 # Cliente OpenAI global
 openai_client = openai.OpenAI()
@@ -519,6 +518,11 @@ if __name__ == "__main__":
         init_db()
         run_seed()
         logger.info("Base de datos inicializada")
+        
+        # AHORA sincronizar categorías (después de que existan las tablas)
+        logger.info("Sincronizando categorías WordPress...")
+        sync_categories_on_startup()
+        
     except Exception as e:
         logger.error(f"Error inicializando base de datos: {e}")
         sys.exit(1)

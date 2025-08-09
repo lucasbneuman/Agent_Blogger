@@ -10,20 +10,18 @@ from agents.nodes.cta_creator import cta_creator_node
 from agents.nodes.reviewer import reviewer_node, quality_checker_node
 from agents.nodes.wordpress_publisher import wordpress_publisher_node, article_assembler_node
 
-# Wrapper con logging forzado para Render
+# Wrapper limpio para WordPress publisher
 def wordpress_publisher_with_logging(state):
     import sys
-    print("\n*** WRAPPER: INICIANDO WORDPRESS PUBLISHER ***", flush=True)
-    print(f"Estado actual: {state.get('current_step')}", flush=True)
-    print(f"Categoria: {state.get('category')}", flush=True)
-    print(f"Tags: {state.get('tags')}", flush=True)
+    print(f"\n=== PUBLICANDO: {state.get('category')} | Tags: {len(state.get('tags', []))} ===", flush=True)
     sys.stdout.flush()
     
     result = wordpress_publisher_node(state)
     
-    print(f"*** WRAPPER: WORDPRESS PUBLISHER COMPLETADO ***", flush=True)
-    print(f"Resultado: {result.get('current_step')}", flush=True)
-    print(f"WordPress ID: {result.get('wordpress_id')}", flush=True)
+    if result.get('wordpress_id'):
+        print(f"=== PUBLICADO: ID {result.get('wordpress_id')} ===\n", flush=True)
+    else:
+        print(f"=== ERROR EN PUBLICACION ===\n", flush=True)
     sys.stdout.flush()
     
     return result

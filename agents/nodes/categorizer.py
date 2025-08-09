@@ -55,18 +55,21 @@ def categorizer_node(state: ArticleState) -> Dict[str, Any]:
         
         TAREAS:
         1. Selecciona LA categoría más apropiada de la lista
-        2. Crea 3-5 etiquetas relevantes (en minúsculas, separadas por comas)
+        2. Crea EXACTAMENTE 7 etiquetas relevantes para asegurar que lleguen 5 a WordPress
         
-        CRITERIOS PARA ETIQUETAS:
+        CRITERIOS PARA ETIQUETAS (IMPORTANTE):
+        - EXACTAMENTE 7 etiquetas (algunas pueden fallar, necesitamos 5 finales)
         - Relacionadas con el contenido específico
-        - Términos que los usuarios podrían buscar
+        - Términos que los usuarios buscarían
         - Incluir variaciones de la keyword principal
         - Máximo 2-3 palabras por etiqueta
         - Todo en minúsculas
+        - Evitar caracteres especiales (tildes, ñ, etc.)
+        - Usar palabras simples que sean fáciles de crear en WordPress
         
         FORMATO DE RESPUESTA:
         Categoría: [nombre exacto de la categoría]
-        Etiquetas: etiqueta1, etiqueta2, etiqueta3, etiqueta4
+        Etiquetas: tag1, tag2, tag3, tag4, tag5, tag6, tag7
         """
         
         response = client.chat.completions.create(
