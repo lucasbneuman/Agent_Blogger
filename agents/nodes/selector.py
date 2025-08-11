@@ -157,19 +157,58 @@ def article_selector_node(state: ArticleState) -> Dict[str, Any]:
         ).order_by(Keyword.priority.desc()).all()
         
         if not available_keywords:
-            # Si no hay keywords disponibles, crear una de ejemplo
+            # Si no hay keywords disponibles, resetear todas las keywords de esta etapa
+            print(f"No hay keywords disponibles para {selected_stage}, reseteando...")
+            reset_keywords = db.query(Keyword).filter(Keyword.stage == selected_stage).all()
+            for kw in reset_keywords:
+                kw.is_used = False
+            db.commit()
+            
+            # Volver a buscar
+            available_keywords = db.query(Keyword).filter(
+                Keyword.stage == selected_stage,
+                Keyword.is_used == False
+            ).order_by(Keyword.priority.desc()).all()
+        
+        if available_keywords:
+            # MEJORADO: Selección más diversa en lugar de siempre la primera
+            
+            # Agrupar keywords por prioridad
+            high_priority = [kw for kw in available_keywords if kw.priority >= 4]
+            medium_priority = [kw for kw in available_keywords if kw.priority == 3]
+            low_priority = [kw for kw in available_keywords if kw.priority <= 2]
+            
+            # Selección ponderada: 60% alta prioridad, 30% media, 10% baja
+            selection_pool = []
+            if high_priority:
+                selection_pool.extend(high_priority * 6)  # 60% probabilidad
+            if medium_priority:
+                selection_pool.extend(medium_priority * 3)  # 30% probabilidad  
+            if low_priority:
+                selection_pool.extend(low_priority * 1)   # 10% probabilidad
+            
+            # Si no hay pool, usar todas las disponibles
+            if not selection_pool:
+                selection_pool = available_keywords
+                
+            # Seleccionar aleatoriamente del pool ponderado
+            selected_keyword_obj = random.choice(selection_pool)
+            selected_keyword = selected_keyword_obj.keyword
+            
+            # Marcar como usado
+            selected_keyword_obj.is_used = True
+            db.commit()
+            
+            print(f"Keyword seleccionada: '{selected_keyword}' (prioridad: {selected_keyword_obj.priority})")
+        else:
+            # Fallback final si algo falla
             fallback_keywords = {
                 'conciencia': 'beneficios de la IA en empresas',
                 'consideracion': 'servicios de consultoría IA',
                 'compra': 'contratar consultor IA'
             }
             selected_keyword = fallback_keywords[selected_stage]
-        else:
-            # Seleccionar keyword con mayor prioridad
-            selected_keyword = available_keywords[0].keyword
-            # Marcar como usado
-            available_keywords[0].is_used = True
-            db.commit()
+            print(f"Usando keyword fallback: '{selected_keyword}'")
         
         # Actualizar estado
         new_state = state.copy()
