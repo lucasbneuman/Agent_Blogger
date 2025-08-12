@@ -229,18 +229,42 @@ def wordpress_publisher_node(state: ArticleState) -> Dict[str, Any]:
                         tag_ids.append(new_wp_tag_id)
                         print(f"    Created new tag: {clean_tag_name} -> ID {new_wp_tag_id}")
                         
-                        # Guardar en BD local para futuras referencias
+                        # Guardar en BD local para futuras referencias (MEJORADO)
                         try:
-                            new_tag = Tag(name=clean_tag_name, slug=tag_slug, wordpress_id=new_wp_tag_id)
-                            db.add(new_tag)
-                            db.commit()
+                            # Verificar si ya existe antes de crear
+                            existing_tag = db.query(Tag).filter(Tag.wordpress_id == new_wp_tag_id).first()
+                            if not existing_tag:
+                                new_tag = Tag(name=clean_tag_name, slug=tag_slug, wordpress_id=new_wp_tag_id)
+                                db.add(new_tag)
+                                db.commit()
                         except Exception as e:
-                            print(f"    Error saving tag to local DB: {str(e)}")
-                            db.rollback()  # Importante: rollback en caso de error
+                            print(f"    Info: Tag ya existe en BD local: {str(e)}")
+                            db.rollback()
+                    elif tag_response.status_code == 400:
+                        # Tag ya existe en WordPress, obtener su ID
+                        try:
+                            error_data = tag_response.json()
+                            if 'term_id' in error_data.get('data', {}) or 'additional_data' in error_data:
+                                # Extraer term_id de la respuesta de error
+                                existing_id = error_data.get('additional_data', [None])[0] if error_data.get('additional_data') else error_data.get('data', {}).get('term_id')
+                                if existing_id:
+                                    tag_ids.append(existing_id)
+                                    print(f"    Tag exists in WP: {clean_tag_name} -> ID {existing_id}")
+                                    
+                                    # Guardar referencia en BD local si no existe
+                                    try:
+                                        existing_tag = db.query(Tag).filter(Tag.wordpress_id == existing_id).first()
+                                        if not existing_tag:
+                                            new_tag = Tag(name=clean_tag_name, slug=tag_slug, wordpress_id=existing_id)
+                                            db.add(new_tag)
+                                            db.commit()
+                                    except Exception as e:
+                                        db.rollback()
+                        except:
+                            print(f"    Error 400 - Tag might exist: {clean_tag_name}")
                     else:
                         print(f"    Error creating tag '{clean_tag_name}': {tag_response.status_code}")
-                        if tag_response.status_code == 400:
-                            print(f"    Response: {tag_response.text[:200]}")
+                        print(f"    Response: {tag_response.text[:200]}")
                 except Exception as e:
                     print(f"    Exception creating tag: {str(e)}")
         print(f"Final tag_ids: {tag_ids}")

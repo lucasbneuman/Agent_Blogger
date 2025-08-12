@@ -25,22 +25,85 @@ def content_creator_node(state: ArticleState) -> Dict[str, Any]:
         return new_state
     
     try:
-        # Definir el prompt según la etapa
+        # SISTEMA MEJORADO: Múltiples estilos creativos para evitar repetitividad
+        import random
+        
+        # Estilos de escritura variados
+        writing_styles = [
+            {
+                "name": "conversacional_directo",
+                "instructions": "Estilo directo y conversacional. Usa preguntas retóricas, ejemplos cotidianos y un tono de 'te cuento como amigo'."
+            },
+            {
+                "name": "narrativo_casos",
+                "instructions": "Estilo narrativo con mini historias y casos reales. Cuenta ejemplos específicos como si fueran historias."
+            },
+            {
+                "name": "practico_accionable", 
+                "instructions": "Estilo súper práctico con pasos concretos, listas numeradas y acciones específicas que puede tomar YA."
+            },
+            {
+                "name": "exploratorio_curioso",
+                "instructions": "Estilo exploratorio que hace pensar. Usa analogías, comparaciones inesperadas y conceptos que abren la mente."
+            },
+            {
+                "name": "profesional_experto",
+                "instructions": "Estilo más profesional pero accesible. Combina experiencia técnica con explicaciones claras."
+            }
+        ]
+        
+        # Seleccionar estilo aleatorio
+        selected_style = random.choice(writing_styles)
+        
+        # Estructuras variadas
+        article_structures = [
+            {
+                "type": "problema_solucion",
+                "template": "1. Introduce un problema común, 2. Explora las consecuencias, 3. Presenta soluciones paso a paso, 4. Muestra resultados esperados"
+            },
+            {
+                "type": "comparativo",
+                "template": "1. Situación actual vs ideal, 2. Diferentes enfoques/opciones, 3. Pros y contras, 4. Recomendación final"
+            },
+            {
+                "type": "guia_paso_a_paso", 
+                "template": "1. Por qué es importante, 2. Preparación necesaria, 3. Pasos detallados, 4. Qué esperar después"
+            },
+            {
+                "type": "mitos_realidades",
+                "template": "1. Mitos comunes sobre el tema, 2. La realidad detrás, 3. Qué significa para tu negocio, 4. Cómo aprovechar la verdad"
+            },
+            {
+                "type": "evolucion_futuro",
+                "template": "1. Cómo era antes, 2. Situación actual, 3. Tendencias emergentes, 4. Prepararse para el futuro"
+            }
+        ]
+        
+        # Seleccionar estructura aleatoria
+        selected_structure = random.choice(article_structures)
+        
+        # Contextos de etapa mejorados y más específicos
         stage_contexts = {
-            'conciencia': """
-            El artículo debe educar y crear conciencia sobre el tema.
-            Enfócate en explicar conceptos, beneficios y posibilidades.
-            El lector está empezando a conocer sobre el tema.
+            'conciencia': f"""
+            OBJETIVO: Educar y crear awareness. El lector NO conoce mucho del tema.
+            ENFOQUE: Explicar conceptos básicos, beneficios evidentes, desmitificar.
+            ESTILO: {selected_style['instructions']}
+            ESTRUCTURA: {selected_structure['template']}
+            EJEMPLOS: Usa casos específicos de pymes argentinas (restaurante, taller, consultorio, etc.)
             """,
-            'consideracion': """
-            El artículo debe ayudar al lector a evaluar opciones y soluciones.
-            Incluye comparaciones, pros y contras, y casos de uso específicos.
-            El lector ya conoce el tema y está evaluando opciones.
+            'consideracion': f"""
+            OBJETIVO: Ayudar a evaluar opciones. El lector YA conoce el tema básico.
+            ENFOQUE: Comparaciones, criterios de decisión, casos de éxito, implementación.
+            ESTILO: {selected_style['instructions']}
+            ESTRUCTURA: {selected_structure['template']}
+            EJEMPLOS: Historias reales de empresas que lo implementaron con resultados concretos.
             """,
-            'compra': """
-            El artículo debe convencer y guiar hacia la toma de decisión.
-            Incluye evidencia social, casos de uso reales y beneficios tangibles.
-            El lector está listo para tomar una decisión.
+            'compra': f"""
+            OBJETIVO: Convencer y guiar a la acción. El lector está LISTO para decidir.
+            ENFOQUE: Evidencia social, ROI claro, proceso de implementación, siguientes pasos.
+            ESTILO: {selected_style['instructions']}
+            ESTRUCTURA: {selected_structure['template']}
+            EJEMPLOS: Casos de éxito con números específicos, testimonios, garantías.
             """
         }
         
@@ -59,48 +122,61 @@ def content_creator_node(state: ArticleState) -> Dict[str, Any]:
         - Mantén el enfoque específico de su solicitud
         """
         
+        # PROMPT SÚPER MEJORADO Y CREATIVO
         prompt = f"""
-        Eres Lucas Benites, un consultor en Inteligencia Artificial especializado en pymes argentinas.
+        Eres Lucas Benites, consultor en IA para pymes argentinas. Pero HOY vas a escribir de manera DIFERENTE.
         
-        Escribe un artículo extenso (mínimo 1500 palabras) sobre: "{keyword}"{telegram_context}
+        TEMA DEL ARTÍCULO: "{keyword}"{telegram_context}
         
-        CONTEXTO DE ETAPA: {stage_contexts[stage]}
+        🎯 CONTEXTO ESPECÍFICO: {stage_contexts[stage]}
         
-        CARACTERÍSTICAS DEL ARTÍCULO:
-        - Lenguaje conversacional y cercano
-        - Dirigido a dueños y gerentes de pymes (poco técnicos)
-        - Marca personal: Lucas Benites 
-        - Público principalmente argentino
-        - Incluir ejemplos prácticos y casos de uso reales
-        - Estructura clara con subtítulos usando ## y ###
-        - Optimizado para SEO con la keyword principal
+        🎨 CREATIVIDAD OBLIGATORIA:
+        - EVITA frases típicas como "en la era digital", "la transformación digital llegó para quedarse", "la inteligencia artificial está revolucionando"  
+        - NO uses introducciones genéricas tipo "¿Te has preguntado alguna vez...?" o "En el mundo actual..."
+        - EMPIEZA con algo inesperado: una estadística sorprendente, una pregunta provocativa, un dato contraintuitivo
+        - USA analogías originales y específicas de Argentina (no futbol - ya es muy usado)
         
-        ESTRUCTURA REQUERIDA:
-        1. Introducción enganchadora (problema/beneficio)
-        2. 3-4 secciones principales con subtítulos ##
-        3. Cada sección con 2-3 subsecciones ### si es necesario
-        4. Casos de uso específicos y ejemplos prácticos en cada sección
-        5. Conclusión que resuma los puntos clave
+        📝 VARIEDAD OBLIGATORIA EN CONTENIDO:
+        - Alternar párrafos largos con párrafos cortos
+        - Incluir al menos una lista numerada Y una con bullets
+        - Usar ejemplos específicos de tipos de pymes: panadería, ferretería, estudio contable, peluquería, consultorio médico, taller mecánico
+        - EVITAR siempre los mismos ejemplos (restaurante ya se usó mucho)
         
-        IMPORTANTE: 
-        - Usa formato markdown (## para títulos, ### para subtítulos)
-        - NO escribas "H2:" o "H3:" - usa directamente ## y ###
-        - Enfócate en casos de uso REALES, no inventes casos de éxito específicos
+        🏢 CASOS REALES ESPECÍFICOS:
+        - Menciona situaciones específicas pero sin inventar nombres de empresas
+        - Ejemplo: "un taller mecánico que implementó esto" en lugar de "Taller Mecánico López"
+        - Usa datos aproximados: "redujo X% el tiempo" pero sin inventar cifras exactas
         
-        TONO:
-        - Conversacional ("vos" en lugar de "tú")
-        - Experto pero accesible
-        - Empático con los desafíos de las pymes
-        - Optimista sobre las posibilidades de la IA
+        🗣️ TONO Y ESTILO:
+        - Usa "vos" argentino natural
+        - Incluye expresiones argentinas ocasionales pero SIN exagerar
+        - Sé directo y práctico - menos filosofía, más acción
+        - Incluye al menos 2-3 preguntas directas al lector a lo largo del artículo
         
-        Escribe SOLO el contenido del artículo, sin título ni meta descripción.
+        📚 ESTRUCTURA DINÁMICA:
+        - NO sigas siempre el mismo patrón de subtítulos
+        - Varía entre títulos descriptivos ("Cómo implementar...") y títulos curiosos ("El problema que nadie ve")
+        - Usa ## para títulos principales, ### para subtítulos
+        - Incluye una sección que sorprenda al lector con información no obvia
+        
+        ⚠️ PROHIBIDO ABSOLUTAMENTE:
+        - Frases hechas y clichés de marketing digital
+        - Introducciones largas y genéricas  
+        - Siempre los mismos ejemplos de pymes
+        - Estructura rígida idéntica a artículos anteriores
+        - Finales tipo "En conclusión..." o "Para concluir..."
+        
+        🎯 LONGITUD: Mínimo 1500 palabras, máximo 2200.
+        
+        Escribe ÚNICAMENTE el contenido del artículo (sin título ni meta descripción).
+        SÉ CREATIVO, SORPRENDENTE Y DIFERENTE.
         """
         
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=4000,
-            temperature=0.7
+            temperature=0.85  # Más creatividad y variabilidad
         )
         
         content = response.choices[0].message.content
