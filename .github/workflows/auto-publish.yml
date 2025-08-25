@@ -2,10 +2,8 @@ name: Auto Publish Articles Daily
 
 on:
   schedule:
-    # 3 publicaciones por día - Horario Argentina (UTC-3)
-    - cron: '0 12 * * *'  # 9:00 AM Argentina
-    - cron: '0 16 * * *'  # 1:00 PM Argentina  
-    - cron: '0 20 * * *'  # 5:00 PM Argentina
+    # 1 publicación por día - Horario Argentina (UTC-3)
+    - cron: '0 16 * * *'  # 1:00 PM Argentina
   
   # Permitir ejecución manual desde GitHub
   workflow_dispatch:
