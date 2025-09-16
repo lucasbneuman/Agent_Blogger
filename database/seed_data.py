@@ -123,26 +123,71 @@ def seed_sample_keywords():
     db = SessionLocal()
     
     keywords_data = [
-        # Conciencia
+        # Conciencia - Expandidas
         ("qué es la inteligencia artificial", "conciencia", 5),
         ("beneficios de la IA en empresas", "conciencia", 4),
         ("automatización empresarial", "conciencia", 4),
         ("herramientas de IA para pymes", "conciencia", 3),
         ("transformación digital empresas", "conciencia", 3),
+        ("futuro de la inteligencia artificial", "conciencia", 4),
+        ("IA generativa para empresas", "conciencia", 4),
+        ("machine learning en negocios", "conciencia", 3),
+        ("robótica proceso automatización", "conciencia", 3),
+        ("tendencias IA 2024", "conciencia", 4),
+        ("chatbots para empresas", "conciencia", 3),
+        ("procesamiento lenguaje natural", "conciencia", 3),
+        ("visión por computadora", "conciencia", 2),
+        ("big data e inteligencia artificial", "conciencia", 3),
+        ("optimización procesos IA", "conciencia", 4),
+        ("eficiencia operativa IA", "conciencia", 4),
+        ("reducción costos automatización", "conciencia", 3),
+        ("innovación tecnológica empresas", "conciencia", 3),
+        ("competitividad digital", "conciencia", 3),
+        ("análisis predictivo empresas", "conciencia", 3),
         
-        # Consideración  
+        # Consideración - Expandidas
         ("consultoría en IA", "consideracion", 5),
         ("implementar IA en empresa", "consideracion", 4),
         ("servicios de automatización", "consideracion", 4),
         ("consultora IA Argentina", "consideracion", 3),
         ("soluciones IA personalizadas", "consideracion", 3),
+        ("estrategia IA empresarial", "consideracion", 4),
+        ("roadmap implementación IA", "consideracion", 4),
+        ("evaluación madurez digital", "consideracion", 3),
+        ("casos uso IA empresas", "consideracion", 4),
+        ("ROI inteligencia artificial", "consideracion", 4),
+        ("migración sistemas IA", "consideracion", 3),
+        ("integración IA existente", "consideracion", 3),
+        ("capacitación equipos IA", "consideracion", 3),
+        ("gestión cambio IA", "consideracion", 2),
+        ("metodología agile IA", "consideracion", 2),
+        ("prototipado IA", "consideracion", 3),
+        ("desarrollo MVP IA", "consideracion", 3),
+        ("arquitectura IA escalable", "consideracion", 3),
+        ("seguridad datos IA", "consideracion", 4),
+        ("compliance IA empresas", "consideracion", 3),
         
-        # Compra
+        # Compra - Expandidas
         ("contratar consultor IA", "compra", 5),
         ("presupuesto automatización IA", "compra", 4),
         ("agendar consulta IA", "compra", 4),
         ("Lucas Benites consultor", "compra", 3),
-        ("reunión gratuita IA", "compra", 3)
+        ("reunión gratuita IA", "compra", 3),
+        ("cotización proyecto IA", "compra", 5),
+        ("propuesta comercial IA", "compra", 4),
+        ("contratar desarrollo IA", "compra", 4),
+        ("servicios IA Buenos Aires", "compra", 3),
+        ("consultor IA freelance", "compra", 3),
+        ("empresa automatización Argentina", "compra", 3),
+        ("solicitar demo IA", "compra", 4),
+        ("evaluación gratuita IA", "compra", 4),
+        ("análisis factibilidad IA", "compra", 3),
+        ("implementación IA llave mano", "compra", 3),
+        ("soporte técnico IA", "compra", 2),
+        ("mantenimiento sistemas IA", "compra", 2),
+        ("contrato desarrollo IA", "compra", 3),
+        ("firma acuerdo IA", "compra", 3),
+        ("inicio proyecto IA", "compra", 3)
     ]
     
     for keyword, stage, priority in keywords_data:
