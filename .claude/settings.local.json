@@ -4,7 +4,10 @@
       "Bash(python:*)",
       "Bash(venvScripts:*)",
       "Bash(pip install:*)",
-      "Bash(.venvScriptsactivate)"
+      "Bash(.venvScriptsactivate)",
+      "Bash(git merge:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
   }
