@@ -52,19 +52,30 @@ def check_environment():
 
 def init_database():
     """Inicializar base de datos"""
-    
+
     logger.info("Inicializando base de datos...")
-    
+
     try:
         from database import init_db
         from database.seed_data import run_seed
-        
+
         init_db()
         run_seed()
-        
+
         logger.info("Base de datos inicializada correctamente")
+
+        # NUEVO: Sincronizar posts existentes de WordPress
+        logger.info("Sincronizando posts existentes de WordPress...")
+        try:
+            from wordpress_sync import sync_wordpress_to_local_db
+            sync_wordpress_to_local_db()
+            logger.info("Sincronización de WordPress completada")
+        except Exception as sync_error:
+            logger.warning(f"No se pudo sincronizar WordPress: {str(sync_error)}")
+            logger.warning("Continuando sin sincronización...")
+
         return True
-        
+
     except Exception as e:
         logger.error(f"Error inicializando base de datos: {str(e)}")
         return False

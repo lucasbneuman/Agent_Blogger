@@ -178,7 +178,25 @@ def wordpress_publisher_node(state: ArticleState) -> Dict[str, Any]:
         import sys
         db = next(get_db())
         category = db.query(Category).filter(Category.name == state['category']).first()
-        category_id = category.wordpress_id if category and category.wordpress_id else 1
+
+        # MEJORADO: Asegurar que siempre haya una categoría válida
+        if not category or not category.wordpress_id:
+            # Si la categoría del estado no existe, intentar obtener una categoría por defecto
+            print(f"⚠️ ADVERTENCIA: Categoría '{state['category']}' no encontrada o sin wordpress_id")
+
+            # Buscar cualquier categoría válida en la BD
+            default_category = db.query(Category).filter(Category.wordpress_id.isnot(None)).first()
+
+            if default_category:
+                category = default_category
+                category_id = default_category.wordpress_id
+                print(f"  Usando categoría por defecto: '{default_category.name}' (ID: {category_id})")
+            else:
+                # Si no hay ninguna categoría en BD, usar 1 (Uncategorized en WordPress)
+                category_id = 1
+                print(f"  No hay categorías en BD. Usando Uncategorized (ID: 1)")
+        else:
+            category_id = category.wordpress_id
         
         # DEBUGGING CRITICO DE CATEGORIA - FORZAR VISIBILIDAD
         import sys

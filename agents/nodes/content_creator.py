@@ -3,6 +3,7 @@ from agents.state import ArticleState
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
+from wordpress_sync import check_title_exists_in_wordpress
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -255,21 +256,61 @@ def title_creator_node(state: ArticleState) -> Dict[str, Any]:
         )
         
         title = response.choices[0].message.content.strip()
-        
+
         # Limpiar comillas que puedan haber quedado
         title = title.strip('"').strip("'").strip()
-        
+
+        # NUEVO: Verificar que el título no exista en WordPress
+        max_attempts = 3
+        attempt = 1
+
+        while attempt <= max_attempts and check_title_exists_in_wordpress(title):
+            processing_log = state.get('processing_log', [])
+            processing_log.append(f"Título '{title}' ya existe en WordPress. Generando alternativa (intento {attempt}/{max_attempts})...")
+
+            # Generar un título alternativo
+            retry_prompt = f"""
+            El título "{title}" ya existe en WordPress. Genera un título DIFERENTE pero igualmente optimizado.
+
+            REQUISITOS:
+            - Máximo 60 caracteres
+            - Debe incluir la keyword "{keyword}"
+            - Debe ser completamente diferente al título anterior
+            - Mantener optimización SEO
+            - Tono conversacional y atractivo
+
+            Responde SOLO con el nuevo título, sin comillas ni explicaciones.
+            """
+
+            retry_response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": retry_prompt}],
+                max_tokens=100,
+                temperature=0.9  # Más creatividad para generar algo diferente
+            )
+
+            title = retry_response.choices[0].message.content.strip().strip('"').strip("'").strip()
+            attempt += 1
+
+        # Si después de los intentos sigue existiendo, agregar sufijo único
+        if check_title_exists_in_wordpress(title):
+            from datetime import datetime
+            timestamp = datetime.now().strftime("%Y")
+            title = f"{title} {timestamp}"
+            processing_log = state.get('processing_log', [])
+            processing_log.append(f"⚠️ Título sigue duplicado. Agregando año: {title}")
+
         # Actualizar estado
         processing_log = state.get('processing_log', [])
-        processing_log.append(f"Título creado: {title}")
-        
+        processing_log.append(f"Título creado y validado: {title}")
+
         new_state = state.copy()
         new_state.update({
             'title': title,
             'current_step': 'title_created',
             'processing_log': processing_log
         })
-        
+
         return new_state
         
     except Exception as e:
